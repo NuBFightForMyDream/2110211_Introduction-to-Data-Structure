@@ -64,7 +64,7 @@ int main() {
             intersected_faculty = temp_data ; // replace temp_data back 
         }
 
-        // check if st isn't empty 
+        // check if set isn't empty 
         if (intersected_faculty.empty() == true) cout << "None" << endl ; 
         else {
             for (auto each_faculty : intersected_faculty) cout << each_faculty << " " ; 

@@ -16,7 +16,7 @@ bool pairSumAlgorithm(vector<int> &nums , int checkNumber) {
             return true ;
         }
         else { 
-            if (nums[left_pos] + nums[right_pos] > checkNumber) { // ถ้าน้อยกว่าค่าที่ต้องการหา --> ไม่เจอเเน่ๆ ต้องขยับขวาเข้ามา
+            if (nums[left_pos] + nums[right_pos] > checkNumber) { // ถ้ามากกว่าค่าที่ต้องการหา --> ไม่เจอเเน่ๆ ต้องขยับขวาเข้ามา
                 right_pos--;
             }
             
