@@ -62,5 +62,6 @@
     "**/*.rpymc": true,
     "**/cache/": true
   },
-  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/g++-16"
+  "C_Cpp.default.compilerPath": "/opt/homebrew/bin/g++-16",
+  "C_Cpp.errorSquiggles": "disabled"
 }
