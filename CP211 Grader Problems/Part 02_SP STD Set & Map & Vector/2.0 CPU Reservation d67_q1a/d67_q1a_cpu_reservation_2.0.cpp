@@ -13,7 +13,7 @@ int main() {
 
     // logic similar to da66_m1_line_monopoly
     map<int , pair<int,int> > reservation_info ; 
-    set<int> id_reserved ; 
+    set<int> id_reserved ;
 
     // Part I : input & store data 
     int count_reservation ; cin >> count_reservation ; 

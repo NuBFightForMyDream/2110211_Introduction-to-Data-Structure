@@ -6,7 +6,7 @@ using namespace std ;
 
 // define getDigit function
 int getDigit(int val , int dig_k) {
-    // return valur of k_th digit of val
+    // return value of k_th digit of val
     int i ;
     for (i = 0 ; i < dig_k ; i++) { 
         val /= base ;
@@ -19,13 +19,15 @@ int getDigit(int val , int dig_k) {
 void radixSort(vector<int> &data , int d) { 
     // define queue 0 - base (represent storage for each digit)
     queue<int> digit_storage[base] ;
+    
     // loop digit from 0 to d
     for (int k = 0 ; k < d ; k++) {
         // push data to each digit first 
         for (auto &x : data) { // x = each value  
             digit_storage[ getDigit(x,k) ].push(x) ; 
         } 
-        // get data from digit_stprage then put back to original data , then clear out queue
+
+        // get data from digit_storage then put back to original data , then clear out queue
         for (int dig = 0 , pos = 0 ; dig < base ; dig++) { 
             while (! digit_storage[dig].empty()) { 
                 data[pos++] = digit_storage[dig].front(); // front-est out first 

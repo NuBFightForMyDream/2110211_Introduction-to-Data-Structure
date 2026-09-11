@@ -11,9 +11,7 @@
 //   pq.pop()    -- เอาค่าที่ priority สูงสุดออก
 //   pq.empty()  -- true ถ้าว่าง
 // =====================================================
-//#include <bits/stdc++.h>
-#include <iostream>
-#include <queue>
+#include <bits/stdc++.h>
 using namespace std;
 
 // Q3 และ Q4 ใช้ struct นี้
@@ -53,13 +51,14 @@ void Q1() {
         int x;
         cin >> x;
         // TODO: pq.push(x)
-        pq.push(x);
+        pq.push(x) ; 
     }
     // TODO: while ไม่ว่าง print pq.top() แล้ว pq.pop()
-    while (!pq.empty()) { 
-        cout << pq.top() << endl;
-        pq.pop() ; 
+    while (!pq.empty()) {
+        cout << pq.top() << endl ; 
+        pq.pop() ;
     }
+
 }
 
 // Q2: รับ n จำนวนเต็ม ใส่ลง MIN priority_queue แล้ว pop ทั้งหมด print ทีละบรรทัด
@@ -72,7 +71,6 @@ void Q2() {
     cin >> n;
     // TODO: ประกาศ pq เป็น min priority_queue ด้วย greater<int>
     priority_queue<int , vector<int> , greater<int>> pq ; 
-
     for (int i = 0; i < n; i++) {
         int x;
         cin >> x;
@@ -80,9 +78,9 @@ void Q2() {
         pq.push(x) ; 
     }
     // TODO: while ไม่ว่าง print pq.top() แล้ว pq.pop()
-    while(!pq.empty()) { 
+    while (!pq.empty()) {
         cout << pq.top() << endl ; 
-        pq.pop() ; 
+        pq.pop() ;
     }
 }
 
@@ -99,9 +97,12 @@ void Q3() {
         v.push_back(it);
     }
     // TODO: sort(v.begin(), v.end())
-    // TODO: print it.id ทีละบรรทัดด้วย range-based for
     sort(v.begin() , v.end()) ; 
-    for (auto &it : v) cout << it.id << endl ; 
+    // TODO: print it.id ทีละบรรทัดด้วย range-based for
+        // note that we loop with Item
+    for (int i = 0 ; i < v.size() ; i++) {
+        cout << v[i].id << endl ; 
+    }
 }
 
 // Q4: input เหมือน Q3 แต่ใช้ priority_queue กับ CmpByVal functor แทน sort
@@ -113,12 +114,18 @@ void Q4() {
     int n;
     cin >> n;
     // TODO: ประกาศ pq ด้วย CmpByVal
+    priority_queue<Item , vector<Item> , CmpByVal> pq ; 
     for (int i = 0; i < n; i++) {
         Item it;
         cin >> it.id >> it.val;
         // TODO: pq.push(it)
+        pq.push(it) ; 
     }
     // TODO: while ไม่ว่าง print pq.top().id แล้ว pq.pop()
+    while (!pq.empty()) {
+        cout << pq.top().id << endl ; 
+        pq.pop() ; 
+    }
 }
 
 int main() {

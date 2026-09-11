@@ -38,7 +38,6 @@ int main() {
                 company_info[dept_to_delete].erase(name_to_change) ; // erase
                 company_info[dept_to_change].insert(name_to_change) ; // add 
 
-
                 // update data to employee_info
                 employee_info[name_to_change] = dept_to_change ; 
             } 
@@ -62,7 +61,7 @@ int main() {
             auto set_to_merge = company_info[dept_to_merge] ; // set<string>
             
             set_to_merge.insert(set_to_destroy.begin() , set_to_destroy.end()) ; 
-            company_info[dept_to_merge] = set_to_merge ; 
+            company_info[dept_to_merge] = set_to_merge ; // assign merged set into value
 
             // erase key (dept_name) in company_info
             company_info.erase(dept_to_destroy) ;  

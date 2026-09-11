@@ -3,7 +3,6 @@
 # include <algorithm>
 using namespace std ; 
 
-
 // function for overloading normal operator 
 // name method with "operator" and sign "+/-/*/..." like "operator+"
 string operator*(string &lhs , const int &rhs) { // must be const too 

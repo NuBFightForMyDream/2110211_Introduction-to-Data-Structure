@@ -1,7 +1,6 @@
 #ifndef _CP_PAIR_INCLUDED_
 #define _CP_PAIR_INCLUDED_
 
-
 #include <iostream>
 #include <assert.h>
 

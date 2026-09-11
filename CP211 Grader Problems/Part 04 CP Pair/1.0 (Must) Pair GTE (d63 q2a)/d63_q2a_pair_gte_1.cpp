@@ -1,8 +1,8 @@
 #include <stdexcept>
-#include <iostream>
-#include "pair.h"
-#include "student.h"
 #include <string>
+#include <iostream>
+#include "d63_q2a_pair_template.h"
+#include "d63_q2a_operator_gte_template.h"
 
 int main() {
     int fa,fb;
