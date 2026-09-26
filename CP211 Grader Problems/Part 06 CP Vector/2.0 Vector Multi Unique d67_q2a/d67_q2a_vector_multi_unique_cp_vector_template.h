@@ -1,7 +1,12 @@
+#ifndef _CP_VECTOR_INCLUDED_
+#define _CP_VECTOR_INCLUDED_
+
 #include <stdexcept>
 #include <iostream>
+#include <vector>
+//#pragma once
 
-namespace CP {
+namespace CP { 
 
 template <typename T>
 class vector
@@ -10,12 +15,10 @@ class vector
     typedef T* iterator;
 
   protected:
-    // attributes
-    T *mData; // pointer to object type T
-    size_t mCap; 
+    T *mData;
+    size_t mCap;
     size_t mSize;
 
-    // MEMORY MANAGEMENT
     void rangeCheck(int n) {
       if (n < 0 || (size_t)n >= mSize) {
         throw std::out_of_range("index of out range") ;
@@ -30,6 +33,13 @@ class vector
       delete [] mData;
       mData = arr;
       mCap = capacity;
+    }
+
+    void ensureCapacity(size_t capacity) {
+      if (capacity > mCap) {
+        size_t s = (capacity > 2 * mCap) ? capacity : 2 * mCap;
+        expand(s);
+      }
     }
 
   public:
@@ -71,8 +81,7 @@ class vector
       return *this;
     }
 
-    ~vector() { // destructor
-      clear();
+    ~vector() {
       delete [] mData;
     }
 
@@ -98,6 +107,7 @@ class vector
         for (size_t i = mSize;i < n;i++) 
           mData[i] = init;
       }
+
 
       mSize = n;
     }
@@ -141,8 +151,7 @@ class vector
 
     iterator insert(iterator it,const T& element) {
       size_t pos = it - begin();
-      if (mSize + 1 > mCap)
-        expand(2 * mCap);
+      ensureCapacity(mSize + 1);
       for(size_t i = mSize;i > pos;i--) {
         mData[i] = mData[i-1];
       }
@@ -163,100 +172,11 @@ class vector
       mSize = 0;
     }
 
-
-    //-------------- extra (unlike STL) ------------------
-    void insert_by_pos(size_t it,const T& element) {
-      insert(begin()+it,element);
-    }
-
-    void erase_by_pos(int index) {
-      erase(begin()+index);
-    }
-
-    void erase_by_value(const T& element) {
-      int i = index_of(element);
-      if (i != -1) erase_by_pos(i);
-    }
-
-    bool contains(const T& element) {
-      return index_of(element) != -1;
-    }
-
-    int index_of(const T& element) {
-      for (int i = 0;i < mSize;i++) {
-        if (mData[i] == element) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
-    bool isReverse(const vector<T> &other) const {
-      //write your code only in this function
-
-        // check size first 
-        if (this->size() != other.size()) { // access with .size() method bcz .mSize/.mCap can't be access directly
-            // note : this->size() means run size() method from this object
-            return false ; 
-        }
-
-        else if (this->size() == 0 && other.size() == 0) {
-            return true ; 
-        }
-
-        else if (this->size() != 0 && other.size() != 0)  { 
-            // using two_iterator to check
-            // but both shouldn't have size 0 
-
-            int left = 0 , right = other.size() - 1 ; 
-            while (left < right) {
-                // out-of-loop (trap) condition
-                if ((*this)[left] != other[right]) { // note *this = mData 
-                    return false ; 
-                }
-                left++ ; right-- ; 
-            } 
-        }
-
-
-      return true;
-    }
+    void uniq(std::vector<CP::vector<T>::iterator> itrs);
 };
 
-} // end namespace
-
-bool equal(CP::vector<int> &a,CP::vector<int> &b) {
-  if (a.size() != b.size()) return false;
-  for (size_t i = 0;i < a.size();i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }
 
-int main() {
-  int n,m;
-  std::cin >> n >> m;
+#endif
 
-  //read input
-  CP::vector<int> a,b;
-  while (n--) {
-    int tmp;
-    std::cin >> tmp;
-    a.push_back(tmp);
-  }
-  while (m--) {
-    int tmp;
-    std::cin >> tmp;
-    b.push_back(tmp);
-  }
-
-  //check
-  CP::vector<int> c;
-  c = b;
-  std::cout << a.isReverse(b) << std::endl;
-  std::cout << equal(c,b) << std::endl;
-  c = a;
-  std::cout << b.isReverse(a) << std::endl;
-  std::cout << equal(c,a) << std::endl;
-}
 

@@ -3,8 +3,8 @@
 #include <string>
 #include <cassert>
 #include <vector>
-#include "vector.h"
-#include "student.h"
+#include "d64_q2c_vector_less_cp_vector_template.h"
+#include "d64_q2c_vector_less_operator_lowerthan.h"
 
 using std::cin;
 using std::cout;

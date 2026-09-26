@@ -9,18 +9,19 @@ using namespace std;
 class Letter{
     public:
     string name; string address; string province; string district; int zip;
-    bool operator < (const Letter& other) const { 
+    bool operator< (const Letter& other) const { 
         // note : other is referenced , not pointer so using other.zip to get attributes
 
-        // --> TODO : sort letter by postal code (zip) ascending , then sort with address ascending , then sort with name ascending
+        // --> TODO : sort letter by postal code (zip) ascending , 
+                    // then sort with address ascending , 
+                    // then sort with district , province , name ascending
         // Note that data can be wrong , we'll correct it in another function 
 
-        if (this->zip == other.zip) {
-            // check address then name
-            if (this->address == other.address) return this->name < other.name ; 
-            else return this->address < other.address ; 
-        }
-        else return this->zip < other.zip ; 
+        if (this->zip != other.zip) return this->zip < other.zip ; 
+        else if (this->address != other.address) return this->address < other.address ; 
+        else if (this->district != other.district) return this->district < other.district ; 
+        else if (this->province != other.province) return this->province < other.province ; 
+        else return this->name < other.name ;   
     }
 };
 
@@ -52,7 +53,7 @@ void correctZipAndSortLetters(vector<ZipInfo>& zipinfo, vector<Letter>& letters)
     }
 
     // sort vector of letters ascendingly
-    stable_sort( letters.begin() , letters.end() );
+    sort( letters.begin() , letters.end() );
 }
 
 int main() {
