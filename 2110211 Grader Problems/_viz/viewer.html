@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grader Visualizer</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #6b6b6b; --faint: #a3a3a3;
+    --line: #e5e5e5; --chip: #ececec; --chip-fg: #1a1a1a;
+    --hl: #dbe7ff; --hl-fg: #1740a8; --hl-line: #7aa2ff;
+    --btn: #111111; --btn-fg: #ffffff;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161616; --fg: #ededed; --muted: #a0a0a0; --faint: #6e6e6e;
+      --line: #2e2e2e; --chip: #2a2a2a; --chip-fg: #ededed;
+      --hl: #1f3566; --hl-fg: #c9d9ff; --hl-line: #5b82e0;
+      --btn: #ededed; --btn-fg: #111111;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Sukhumvit Set", "Thonburi", "Segoe UI", sans-serif;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 64px; }
+  header { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; font-weight: 600; }
+  #caption { margin: 0; font-size: 17px; min-height: 1.5em; }
+  nav { display: flex; gap: 8px; align-items: center; }
+  button {
+    font: inherit; font-size: 15px; padding: 8px 16px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  }
+  button.primary { background: var(--btn); color: var(--btn-fg); border-color: var(--btn); }
+  button:disabled { opacity: .4; cursor: default; }
+  .bar { display: flex; align-items: center; gap: 12px; margin: 18px 0 8px; color: var(--muted); font-size: 13px; }
+  .bar input { flex: 1; accent-color: var(--hl-line); }
+  .warn { background: var(--hl); color: var(--hl-fg); padding: 8px 12px; border-radius: 10px; font-size: 14px; margin: 8px 0; }
+  #scene { margin-top: 20px; }
+  #snaps { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); display: grid; gap: 20px; }
+  .snap-head { display: flex; gap: 10px; align-items: baseline; font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .snap-head code { font-family: var(--mono); color: var(--fg); font-size: 15px; }
+  .chg { color: var(--hl-fg); background: var(--hl); border-radius: 6px; padding: 0 6px; font-size: 12px; }
+  .cells { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .cell {
+    font-family: var(--mono); font-size: 14px; padding: 6px 10px; border-radius: 8px;
+    background: var(--chip); color: var(--chip-fg); white-space: nowrap;
+  }
+  .cell.top { background: var(--hl); color: var(--hl-fg); outline: 1.5px solid var(--hl-line); }
+  .tag { font-size: 12px; color: var(--faint); }
+  .stack { display: inline-flex; flex-direction: column; gap: 4px; min-width: 120px; }
+  .stack .cell { text-align: center; }
+  .heap { width: 100%; height: auto; display: block; margin-bottom: 8px; }
+  .heap line { stroke: var(--line); stroke-width: 1.5; }
+  .heap rect { fill: var(--chip); }
+  .heap rect.top { fill: var(--hl); stroke: var(--hl-line); stroke-width: 1.5; }
+  .heap text { fill: var(--chip-fg); font: 13px var(--mono); text-anchor: middle; dominant-baseline: central; }
+  .heap text.idx { fill: var(--faint); font-size: 10px; }
+  details { margin-top: 28px; color: var(--muted); font-size: 14px; }
+  details pre { font-family: var(--mono); color: var(--fg); background: var(--chip); padding: 12px; border-radius: 10px; max-height: 280px; overflow: auto; }
+  .empty { color: var(--muted); }
+  kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 id="title">Visualizer</h1>
+      <p id="caption"></p>
+    </div>
+    <nav>
+      <button id="prev">← ย้อนกลับ</button>
+      <button id="play" title="Space">▶ เล่น</button>
+      <button id="next" class="primary">ถัดไป →</button>
+    </nav>
+  </header>
+  <div class="bar">
+    <span id="counter"></span>
+    <input id="slider" type="range" min="0" value="0" aria-label="step">
+    <span><kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd></span>
+  </div>
+  <div id="notes"></div>
+  <section id="scene"></section>
+  <section id="snaps" hidden></section>
+  <details id="stdout-box"><summary>Program output (stdout)</summary><pre id="stdout"></pre></details>
+</main>
+
+<script src="scene.js"></script>
+<script src="trace.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmt = v => Array.isArray(v) ? `(${v.map(fmt).join(', ')})` : String(v);
+  window.VIZ_FMT = fmt; window.VIZ_ESC = esc;   // scenes may use these
+
+  const trace = window.VIZ_TRACE || [];
+  const scene = window.VIZ_SCENE || null;
+  const setup = trace.find(e => e.type === 'setup') || {};
+  const META = new Set(['setup', 'snap', 'truncated']);
+  const marks = [];                               // trace index of every step event
+  trace.forEach((e, i) => { if (!META.has(e.type)) marks.push(i); });
+  const total = marks.length;
+
+  // replay from the start : scenes stay simple (mutate freely) and memory stays small
+  function stateAt(k) {
+    const st = scene ? scene.init(setup) : {};
+    const snaps = {};
+    const end = k < total ? marks[k] : trace.length;
+    for (let i = 0; i < end; i++) {
+      const e = trace[i];
+      if (e.type === 'snap') snaps[e.name] = e;
+      else if (!META.has(e.type) && scene) scene.apply(st, e);
+    }
+    return { st, snaps, ev: k ? trace[marks[k - 1]] : null };
+  }
+
+  const fallbackCaption = ev => ev
+    ? `<b>${esc(ev.type)}</b> ` + Object.entries(ev).filter(([k]) => k !== 'type')
+        .map(([k, v]) => `${esc(k)} = <code>${esc(fmt(v))}</code>`).join(' · ')
+    : 'เริ่มต้น';
+
+  // ---------- VIZ_SNAP panels ----------
+  function heapSvg(a) {
+    const n = Math.min(a.length, 31);
+    const depth = Math.floor(Math.log2(n)) + 1;
+    const labels = a.slice(0, n).map(fmt);
+    const bw = Math.max(44, ...labels.map(l => l.length * 7.8 + 18));
+    const W = Math.max(480, 2 ** (depth - 1) * (bw + 14));
+    const H = depth * 60 + 8;
+    const pos = i => {
+      const d = Math.floor(Math.log2(i + 1)), j = i + 1 - 2 ** d;
+      return [(j + 0.5) / 2 ** d * W, 26 + d * 60];
+    };
+    let s = '';
+    for (let i = 1; i < n; i++) {
+      const [x1, y1] = pos((i - 1) >> 1), [x2, y2] = pos(i);
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    }
+    labels.forEach((l, i) => {
+      const [x, y] = pos(i);
+      s += `<rect class="${i ? '' : 'top'}" x="${x - bw / 2}" y="${y - 15}" width="${bw}" height="30" rx="8"/>` +
+           `<text x="${x}" y="${y}">${esc(l)}</text><text class="idx" x="${x}" y="${y - 22}">[${i}]</text>`;
+    });
+    return `<svg class="heap" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${s}</svg>` +
+      (a.length > n ? `<div class="tag">แสดง ${n} โหนดแรกจาก ${a.length}</div>` : '');
+  }
+
+  const MAXCELLS = 60;
+  function snapBody(s) {
+    const a = s.data;
+    if (!a.length) return `<div class="empty">(ว่าง)</div>`;
+    const more = a.length > MAXCELLS ? `<span class="tag">… อีก ${a.length - MAXCELLS}</span>` : '';
+    if (s.kind === 'stack') {
+      const top = a.slice(-MAXCELLS).reverse();
+      return `<div class="stack">${top.map((v, i) => `<div class="cell ${i ? '' : 'top'}">${esc(fmt(v))}</div>`).join('')}</div>` +
+             `<div class="tag">↑ บนสุด = top()</div>${more}`;
+    }
+    if (s.kind === 'queue') {
+      return `<div class="cells"><span class="tag">front →</span>${a.slice(0, MAXCELLS)
+        .map((v, i) => `<span class="cell ${i ? '' : 'top'}">${esc(fmt(v))}</span>`).join('')}${more}<span class="tag">← back</span></div>`;
+    }
+    // priority_queue : real heap layout, index 0 = top()
+    return heapSvg(a) + `<div class="cells"><span class="tag">heap array →</span>${a.slice(0, MAXCELLS)
+      .map((v, i) => `<span class="cell ${i ? '' : 'top'}">${esc(fmt(v))}</span>`).join('')}${more}</div>`;
+  }
+  const KIND = { stack: 'std::stack', queue: 'std::queue', pq: 'std::priority_queue' };
+  function renderSnaps(cur, prev) {
+    const names = Object.keys(cur);
+    $('snaps').hidden = !names.length;
+    $('snaps').innerHTML = names.map(name => {
+      const s = cur[name];
+      const changed = prev && JSON.stringify(prev[name]?.data) !== JSON.stringify(s.data);
+      return `<div><div class="snap-head"><code>${esc(name)}</code><span>${KIND[s.kind] || esc(s.kind)}</span>` +
+        `<span>size ${s.data.length}</span>${changed ? '<span class="chg">เปลี่ยน</span>' : ''}</div>${snapBody(s)}</div>`;
+    }).join('');
+  }
+
+  // ---------- shell ----------
+  if (scene?.css) document.head.insertAdjacentHTML('beforeend', `<style>${scene.css}</style>`);
+  $('title').textContent = scene?.title ? scene.title(setup) : 'Visualizer';
+  document.title = $('title').textContent;
+  const notes = [];
+  if (!trace.length) notes.push('ไม่มี event เลย: ใส่ VIZ(...) / VIZ_SNAP(...) ในโค้ด แล้วรันผ่าน _viz/run.sh');
+  if (trace.some(e => e.type === 'truncated')) notes.push('trace ยาวเกิน limit ใน viz.h เลยตัดท้ายทิ้ง ใช้ input เล็กลงจะดูง่ายกว่า');
+  $('notes').innerHTML = notes.map(n => `<div class="warn">${esc(n)}</div>`).join('');
+  const out = window.VIZ_STDOUT || '';
+  if (out) $('stdout').textContent = out; else $('stdout-box').hidden = true;
+
+  const slider = $('slider');
+  slider.max = total;
+  let k = 0, timer = null;
+
+  function show(to) {
+    k = Math.max(0, Math.min(total, to));
+    const cur = stateAt(k), prev = k ? stateAt(k - 1) : null;
+    $('caption').innerHTML = scene?.caption ? scene.caption(cur.ev, cur.st) : fallbackCaption(cur.ev);
+    if (scene?.render) scene.render(cur.st, $('scene'), cur.ev);
+    renderSnaps(cur.snaps, prev?.snaps);
+    $('counter').textContent = `step ${k} / ${total}`;
+    slider.value = k;
+    $('prev').disabled = k === 0;
+    $('next').disabled = k === total;
+    if (k === total) stop();
+  }
+  function stop() { clearInterval(timer); timer = null; $('play').textContent = '▶ เล่น'; }
+  function play() {
+    if (timer) return stop();
+    if (k === total) show(0);
+    $('play').textContent = '❚❚ หยุด';
+    timer = setInterval(() => show(k + 1), 800);
+  }
+
+  $('prev').onclick = () => { stop(); show(k - 1); };
+  $('next').onclick = () => { stop(); show(k + 1); };
+  $('play').onclick = play;
+  slider.oninput = () => { stop(); show(+slider.value); };
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' && e.key !== ' ') return;
+    if (e.key === 'ArrowRight') { stop(); show(k + 1); }
+    else if (e.key === 'ArrowLeft') { stop(); show(k - 1); }
+    else if (e.key === 'Home') { stop(); show(0); }
+    else if (e.key === 'End') { stop(); show(total); }
+    else if (e.key === ' ') { e.preventDefault(); play(); }
+    else return;
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

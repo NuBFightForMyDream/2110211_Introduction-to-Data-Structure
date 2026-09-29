@@ -63,5 +63,12 @@
     "**/cache/": true
   },
   "C_Cpp.default.compilerPath": "/opt/homebrew/bin/g++-16",
-  "C_Cpp.errorSquiggles": "disabled"
+  "C_Cpp.errorSquiggles": "disabled",
+  "folder-color.pathColors": [
+    {
+      "folderPath": "2110211 Introduction To Data Structure/CP211 Grader Problems/Part 00 C++ Intro/",
+      "isFolderOnly": true,
+      "color": "foldercolorizer.color_00875f"
+    }
+  ]
 }
