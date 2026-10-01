@@ -1,0 +1,786 @@
+<title>CP Container Visualizer</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* Layout: command console on top, memory stage + player on the left, C++ listing and stats on the right; one column under 900px */
+:root{
+  --bg:#e7eaee; --panel:#ffffff; --panel2:#f2f5f8; --fg:#13171c; --muted:#5d6874; --line:#d2d8e0;
+  --cell:#ffffff; --cell-line:#aeb8c4; --ghost:#99a3b0;
+  --accent:#a2500e; --accent-fill:#eda136; --accent-weak:#f8e6cc; --on-accent:#ffffff;
+  --alloc:#0c7550; --alloc-weak:#d5eee3;
+  --free:#ad2130; --free-weak:#f7dade;
+  --move:#1b559f; --move-weak:#d8e5f6;
+  --font-ui:'IBM Plex Sans','IBM Plex Sans Thai',system-ui,-apple-system,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1216; --panel:#161b21; --panel2:#1c222a; --fg:#e5eaf0; --muted:#94a0ad; --line:#2a313a;
+    --cell:#202730; --cell-line:#3d4653; --ghost:#6c7784;
+    --accent:#f0a742; --accent-fill:#c57f22; --accent-weak:#3a2a13; --on-accent:#16191d;
+    --alloc:#45d39a; --alloc-weak:#0f2c23;
+    --free:#ff7b89; --free-weak:#34191d;
+    --move:#76abf3; --move-weak:#122a45;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1216; --panel:#161b21; --panel2:#1c222a; --fg:#e5eaf0; --muted:#94a0ad; --line:#2a313a;
+  --cell:#202730; --cell-line:#3d4653; --ghost:#6c7784;
+  --accent:#f0a742; --accent-fill:#c57f22; --accent-weak:#3a2a13; --on-accent:#16191d;
+  --alloc:#45d39a; --alloc-weak:#0f2c23;
+  --free:#ff7b89; --free-weak:#34191d;
+  --move:#76abf3; --move-weak:#122a45;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:18px 36px;display:flex;flex-direction:column;gap:13px}
+header.top{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:flex-end;justify-content:space-between}
+h1{margin:0;font-size:clamp(19px,3.2vw,27px);font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+h1 .ns{font-family:var(--font-mono);color:var(--accent)}
+.sub{color:var(--muted);font-size:12.5px;max-width:62ch;margin-top:3px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font-family:var(--font-mono);font-size:13px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px}
+.lbl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+button{font-family:inherit;cursor:pointer}
+input.cmd{flex:1 1 230px;min-width:0;font-family:var(--font-mono);font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
+input.cmd:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font-size:12.5px;padding:8px 11px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
+.btn:hover{border-color:var(--accent-fill)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn.mono{font-family:var(--font-mono);font-size:12px}
+.btn.sq{width:36px;height:34px;display:grid;place-items:center;padding:0;font-size:13px}
+.hint{color:var(--muted);font-size:11.5px;font-family:var(--font-mono);margin-top:8px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:13px;align-items:start}
+.col{display:flex;flex-direction:column;gap:13px;min-width:0}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.members{display:flex;flex-wrap:wrap;gap:7px}
+.mem{font-family:var(--font-mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;display:flex;gap:7px;align-items:baseline}
+.mem b{font-weight:600;color:var(--muted);font-size:10px;letter-spacing:.06em}
+.mem span{font-variant-numeric:tabular-nums;font-weight:600}
+.block{display:flex;flex-direction:column;gap:5px;margin-top:12px}
+.blockhead{display:flex;gap:9px;align-items:baseline;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.blockhead em{font-style:normal;color:var(--fg);font-weight:600}
+.slots{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px}
+.slot{flex:0 0 auto;width:56px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-family:var(--font-mono);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cell{width:56px;height:46px;border-radius:7px;border:1.5px solid var(--cell-line);background:var(--cell);display:grid;place-items:center;font-family:var(--font-mono);font-size:14px;font-weight:600;overflow:hidden;transition:background .18s,border-color .18s,transform .18s}
+.cell.empty{border-style:dashed;border-color:var(--line);background:transparent;color:var(--ghost);font-weight:400}
+.cell.stale{border-style:dashed;color:var(--ghost);background:transparent}
+.cell.w{background:var(--alloc-weak);border-color:var(--alloc);transform:translateY(-3px)}
+.cell.r{background:var(--move-weak);border-color:var(--move)}
+.cell.f{background:var(--free-weak);border-color:var(--free);color:var(--free)}
+.cell.a{background:var(--accent-weak);border-color:var(--accent-fill)}
+.mk{height:13px;font-family:var(--font-mono);font-size:9.5px;color:var(--accent);white-space:nowrap}
+.mk.b{color:var(--move)}
+@media(prefers-reduced-motion:reduce){.cell{transition:none}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1.5px solid var(--cell-line)}
+.step{display:flex;gap:10px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent-fill);border-radius:8px;padding:10px 12px;min-height:60px}
+.step.err{border-left-color:var(--free)}
+.step .n{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding-top:2px}
+.step .d{min-width:0;font-size:13.5px}
+.step .d code{font-family:var(--font-mono);font-size:12.5px;background:var(--panel);border:1px solid var(--line);padding:0 4px;border-radius:4px}
+.step .ret{display:block;margin-top:3px;font-family:var(--font-mono);font-size:12px;color:var(--move)}
+.step.err .ret{color:var(--free)}
+.player{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.track{flex:1 1 140px;min-width:100px;height:6px;border-radius:3px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent-fill);transition:width .15s}
+.ctr{font-family:var(--font-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+pre.code{margin:8px 0 0;max-height:430px;overflow:auto;font-family:var(--font-mono);font-size:12px;line-height:1.55;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 0}
+pre.code .l{display:block;padding:0 12px;white-space:pre;border-left:3px solid transparent}
+pre.code .l.on{background:var(--accent-weak);border-left-color:var(--accent-fill)}
+pre.code .cm{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(98px,1fr));gap:7px;margin-top:8px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+.stat b{display:block;font-family:var(--font-mono);font-size:18px;font-variant-numeric:tabular-nums;line-height:1.3}
+.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.spark{margin-top:9px}
+.spark svg{display:block;width:100%;height:46px}
+.trace{display:flex;flex-direction:column;gap:3px;max-height:210px;overflow:auto;margin-top:8px}
+.trace button{text-align:left;font-family:var(--font-mono);font-size:12px;padding:6px 8px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--fg);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.trace button:hover{background:var(--panel2)}
+.trace button.on{background:var(--accent-weak);border-color:var(--accent-fill)}
+.badge{font-size:9.5px;padding:1px 6px;border-radius:999px;background:var(--free-weak);color:var(--free);white-space:nowrap;font-weight:600}
+.ringwrap{margin-top:12px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.ringwrap svg{max-width:100%;height:auto}
+.note{font-size:12px;color:var(--muted);max-width:34ch}
+.flash{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 15px;border-radius:999px;font-size:13px;z-index:9;box-shadow:0 6px 22px rgba(0,0,0,.22)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="ns">CP::</span>Container Visualizer</h1>
+      <div class="sub">พิมพ์คำสั่งอะไรก็ได้ แล้วเดินดูทีละสเต็ปว่า <code>mData</code> / <code>mSize</code> / <code>mCap</code> / <code>mFront</code> ขยับยังไง ตามโค้ดใน vector.h, stack.h, queue.h</div>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </header>
+
+  <section class="panel">
+    <div class="lbl">Command console</div>
+    <div class="row" style="margin-top:8px">
+      <input class="cmd" id="cmd" autocomplete="off" spellcheck="false" placeholder="push_back 42">
+      <button class="btn primary" id="runBtn">Run</button>
+      <button class="btn" id="resetBtn">Reset</button>
+    </div>
+    <div class="row" id="quick" style="margin-top:9px"></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel">
+        <div class="lbl">Member data</div>
+        <div class="members" id="members" style="margin-top:8px"></div>
+        <div id="stage"></div>
+        <div class="legend">
+          <span><i style="background:var(--alloc-weak);border-color:var(--alloc)"></i>เขียน</span>
+          <span><i style="background:var(--move-weak);border-color:var(--move)"></i>อ่าน</span>
+          <span><i style="background:var(--free-weak);border-color:var(--free)"></i>คืน/ตัดทิ้ง</span>
+          <span><i style="border-style:dashed;background:transparent"></i>reserved / ค้างอยู่</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="lbl">Step</div>
+        <div class="step" id="step" style="margin-top:8px"><div class="n">–</div><div class="d">พร้อมแล้ว</div></div>
+        <div class="player">
+          <button class="btn sq" id="first" title="ไปต้นสุด">⏮</button>
+          <button class="btn sq" id="prev" title="ย้อน 1 สเต็ป">◀</button>
+          <button class="btn sq" id="playBtn" title="เล่น / หยุด">▶</button>
+          <button class="btn sq" id="next" title="ถัดไป 1 สเต็ป">▶|</button>
+          <button class="btn sq" id="last" title="ไปท้ายสุด">⏭</button>
+          <button class="btn mono" id="spd">1×</button>
+          <div class="track"><i id="bar" style="width:0%"></i></div>
+          <div class="ctr" id="ctr">0 / 0</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel">
+        <div class="lbl">Source — <span id="codeTitle" style="text-transform:none;letter-spacing:0"></span></div>
+        <pre class="code" id="code"></pre>
+      </section>
+
+      <section class="panel">
+        <div class="lbl">Cost so far</div>
+        <div class="stats" id="stats"></div>
+        <div class="spark" id="spark"></div>
+      </section>
+
+      <section class="panel">
+        <div class="lbl">Trace</div>
+        <div class="trace" id="trace"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+
+/* ---------------- source listings (from the course headers) ---------------- */
+var CODE={
+vec_push:{t:'vector::push_back',src:[
+'void expand(size_t capacity) {',
+'    T *arr = new T[capacity]();',
+'    for (size_t i = 0; i < mSize; i++)',
+'        arr[i] = mData[i];',
+'    delete [] mData;',
+'    mData = arr;  mCap = capacity;',
+'}',
+'',
+'void ensureCapacity(size_t capacity) {',
+'    if (capacity > mCap) {',
+'        size_t s = (capacity > 2*mCap) ? capacity : 2*mCap;',
+'        expand(s);',
+'    }',
+'}',
+'',
+'void push_back(const T& element) {',
+'    ensureCapacity(mSize + 1);',
+'    mData[mSize++] = element;',
+'}'],
+L:{alloc:1,copy:3,del:4,assign:5,check:9,pick:10,entry:15,ensure:16,store:17}},
+
+vec_pop:{t:'vector::pop_back',src:[
+'void pop_back() {',
+'    mSize--;   // ข้อมูลยังอยู่ แค่ไม่นับแล้ว',
+'}'],
+L:{entry:0,dec:1}},
+
+vec_insert:{t:'vector::insert',src:[
+'iterator insert(iterator it, const T& element) {',
+'    size_t pos = it - begin();',
+'    ensureCapacity(mSize + 1);',
+'    for (size_t i = mSize; i > pos; i--)',
+'        mData[i] = mData[i-1];',
+'    mData[pos] = element;',
+'    mSize++;',
+'    return begin() + pos;',
+'}',
+'',
+'void expand(size_t capacity) {',
+'    T *arr = new T[capacity]();',
+'    for (size_t i = 0; i < mSize; i++)',
+'        arr[i] = mData[i];',
+'    delete [] mData;',
+'    mData = arr;  mCap = capacity;',
+'}'],
+L:{entry:0,pos:1,check:2,pick:2,ensure:2,shift:4,put:5,inc:6,alloc:11,copy:13,del:14,assign:15}},
+
+vec_erase:{t:'vector::erase',src:[
+'void erase(iterator it) {',
+'    while ((it+1) != end()) {',
+'        *it = *(it+1);',
+'        it++;',
+'    }',
+'    mSize--;',
+'}'],
+L:{entry:0,loop:1,move:2,dec:5}},
+
+vec_at:{t:'vector::at / operator[]',src:[
+'void rangeCheck(int n) {',
+'    if (n < 0 || (size_t)n >= mSize)',
+'        throw std::out_of_range("index of out range");',
+'}',
+'',
+'T& at(int index) {',
+'    rangeCheck(index);',
+'    return mData[index];',
+'}',
+'',
+'T& operator[](int index) {',
+'    return mData[index];   // ไม่เช็กขอบเขตเลย',
+'}'],
+L:{entry:5,check:6,thr:2,ret:7,bEntry:10,bRet:11}},
+
+vec_resize:{t:'vector::resize / clear',src:[
+'void resize(size_t n) {',
+'    ensureCapacity(n);',
+'    for (size_t i = mSize; i < n; i++)',
+'        mData[i] = T();',
+'    mSize = n;',
+'}',
+'',
+'void clear() { mSize = 0; }',
+'',
+'void expand(size_t capacity) {',
+'    T *arr = new T[capacity]();',
+'    for (size_t i = 0; i < mSize; i++)',
+'        arr[i] = mData[i];',
+'    delete [] mData;',
+'    mData = arr;  mCap = capacity;',
+'}'],
+L:{entry:0,ensure:1,check:1,pick:1,fill:3,set:4,clr:7,alloc:10,copy:12,del:13,assign:14}},
+
+stk_push:{t:'stack::push',src:[
+'// stack = vector ที่ตัด iterator, insert, erase, at, [] ทิ้ง',
+'void push(const T& element) {      // == vector::push_back',
+'    ensureCapacity(mSize + 1);',
+'    mData[mSize++] = element;',
+'}',
+'',
+'void expand(size_t capacity) {',
+'    T *arr = new T[capacity]();',
+'    for (size_t i = 0; i < mSize; i++)',
+'        arr[i] = mData[i];',
+'    delete [] mData;',
+'    mData = arr;  mCap = capacity;',
+'}',
+'',
+'void ensureCapacity(size_t capacity) {',
+'    if (capacity > mCap) {',
+'        size_t s = (capacity > 2*mCap) ? capacity : 2*mCap;',
+'        expand(s);',
+'    }',
+'}'],
+L:{entry:1,ensure:2,store:3,alloc:7,copy:9,del:10,assign:11,check:15,pick:16}},
+
+stk_pop:{t:'stack::pop / top',src:[
+'void pop() {                 // == vector::pop_back',
+'    mSize--;',
+'}',
+'',
+'const T& top() const {',
+'    return mData[mSize-1];   // ตัวท้ายของ mData คือยอด stack',
+'}'],
+L:{entry:0,dec:1,tEntry:4,tRet:5}},
+
+q_push:{t:'queue::push (circular)',src:[
+'void expand(size_t capacity) {',
+'    T *arr = new T[capacity]();',
+'    for (size_t i = 0; i < mSize; i++)',
+'        arr[i] = mData[(mFront + i) % mCap];   // คลายวงกลมให้เรียง',
+'    delete [] mData;',
+'    mData = arr;  mCap = capacity;  mFront = 0;',
+'}',
+'',
+'void ensureCapacity(size_t capacity) {',
+'    if (capacity > mCap) {',
+'        size_t s = (capacity > 2*mCap) ? capacity : 2*mCap;',
+'        expand(s);',
+'    }',
+'}',
+'',
+'void push(const T& element) {',
+'    ensureCapacity(mSize + 1);',
+'    mData[(mFront + mSize) % mCap] = element;',
+'    mSize++;',
+'}'],
+L:{alloc:1,copy:3,del:4,assign:5,check:9,pick:10,entry:15,ensure:16,store:17,inc:18}},
+
+q_pop:{t:'queue::pop / front / back',src:[
+'void pop() {',
+'    mFront = (mFront + 1) % mCap;   // แค่ขยับหัวคิว',
+'    mSize--;',
+'}',
+'',
+'const T& front() const { return mData[mFront]; }',
+'const T& back()  const { return mData[(mFront + mSize - 1) % mCap]; }'],
+L:{entry:0,mv:1,dec:2,fr:5,bk:6}}
+};
+
+/* ---------------- engine ---------------- */
+var ADDR=0x55a140, MAXN=72;
+function newAddr(){ADDR+=0x60;return ADDR}
+function hex(n){return '0x'+n.toString(16)}
+function cells(n){var a=[],i;for(i=0;i<n;i++)a.push({v:null});return a}
+function clone(S){
+  return{cap:S.cap,size:S.size,front:S.front,addr:S.addr,tmpAddr:S.tmpAddr,copies:S.copies,
+    cells:S.cells.map(function(c){return{v:c.v}}),
+    tmp:S.tmp?{cap:S.tmp.cap,cells:S.tmp.cells.map(function(c){return{v:c.v}})}:null};
+}
+function newWorld(kind){
+  var w={kind:kind,TL:[],ops:[],idx:0,expands:0,
+    S:{cap:1,size:0,front:0,addr:newAddr(),tmpAddr:null,copies:0,cells:cells(1),tmp:null}};
+  start(w,kind==='vector'?'vector<T> v;':(kind==='stack'?'stack<T> s;':'queue<T> q;'),null);
+  rec(w,'default constructor: `mData = new T[1]()`, `mSize = 0`, `mCap = 1`',null,-1,{});
+  return w;
+}
+function start(w,label,code){w.ops.push({label:label,start:w.TL.length,copies:0,expands:0,err:false,code:code})}
+function rec(w,desc,code,line,hl,ex){
+  var o=ex||{};
+  w.TL.push({desc:desc,code:code,line:(line===undefined?-1:line),hl:hl||{},S:clone(w.S),
+    op:w.ops.length-1,ret:o.ret||null,err:!!o.err});
+}
+function curOp(w){return w.ops[w.ops.length-1]}
+
+function expand(w,cap,code,L,circ){
+  var S=w.S,i,src;
+  S.tmp={cap:cap,cells:cells(cap)}; S.tmpAddr=newAddr();
+  rec(w,'`new T['+cap+']()` — จองบล็อกใหม่ที่ '+hex(S.tmpAddr)+' (ของเดิมยังอยู่)',code,L.alloc,{tmpAll:'a'});
+  for(i=0;i<S.size;i++){
+    src=circ?((S.front+i)%S.cap):i;
+    S.tmp.cells[i].v=S.cells[src].v; S.copies++; curOp(w).copies++;
+    rec(w,'`arr['+i+'] = mData['+(circ?'('+S.front+'+'+i+')%'+S.cap+' = '+src:i)+']` — copy ครั้งที่ '+S.copies,
+      code,L.copy,{main:{},tmp:{}} , null);
+    w.TL[w.TL.length-1].hl={main:kv(src,'r'),tmp:kv(i,'w')};
+  }
+  rec(w,'`delete [] mData` — คืนบล็อกเก่า '+hex(S.addr)+' ไม่งั้น memory leak',code,L.del,{mainAll:'f'});
+  S.cells=S.tmp.cells; S.cap=cap; S.addr=S.tmpAddr; S.tmp=null; S.tmpAddr=null;
+  if(circ) S.front=0;
+  rec(w,'`mData = arr; mCap = '+cap+'`'+(circ?'`; mFront = 0`':'')+' — ย้ายเสร็จ',code,L.assign,{mainAll:'a'});
+  w.expands++; curOp(w).expands++;
+}
+function kv(k,v){var o={};o[k]=v;return o}
+function ensure(w,need,code,L,circ){
+  var S=w.S;
+  rec(w,'`ensureCapacity('+need+')` — ต้องการ '+need+' ช่อง, ตอนนี้ `mCap = '+S.cap+'`',code,L.check,{});
+  if(need>S.cap){
+    var s=need>2*S.cap?need:2*S.cap;
+    rec(w,'เต็ม → ขยายเป็น '+s+' (เท่าตัว ทำให้ push เฉลี่ยแล้วเป็น O(1))',code,L.pick,{mainAll:'f'});
+    expand(w,s,code,L,circ);
+  }
+}
+function full(w){if(w.S.size>=MAXN){flash('จำกัดที่ '+MAXN+' ตัว เพื่อให้ภาพยังอ่านออก');return true}return false}
+
+/* vector ops */
+function vPush(w,v){
+  if(full(w))return; var S=w.S,C='vec_push',L=CODE[C].L;
+  start(w,'push_back('+v+')',C);
+  rec(w,'เรียก `push_back('+v+')`',C,L.entry,{});
+  ensure(w,S.size+1,C,L,false);
+  S.cells[S.size]={v:v}; S.size++;
+  rec(w,'`mData[mSize++] = '+v+'` → เขียนช่อง '+(S.size-1)+', `mSize = '+S.size+'`',C,L.store,{main:kv(S.size-1,'w')});
+}
+function vPop(w){
+  var S=w.S,C='vec_pop',L=CODE[C].L;
+  start(w,'pop_back()',C);
+  if(S.size===0){rec(w,'`mSize` เป็น 0 อยู่แล้ว → `mSize--` จะ underflow เป็นเลขมหาศาล (undefined behavior)',C,L.dec,{},{err:true});curOp(w).err=true;return}
+  S.size--;
+  rec(w,'`mSize--` → ค่า `'+S.cells[S.size].v+'` ยังนอนอยู่ในหน่วยความจำ แค่ไม่ถูกนับแล้ว',C,L.dec,{main:kv(S.size,'f')});
+}
+function vInsert(w,pos,v){
+  if(full(w))return; var S=w.S,C='vec_insert',L=CODE[C].L,i;
+  if(isNaN(pos)||pos<0||pos>S.size){flash('insert ต้องมี 0 ≤ pos ≤ mSize ('+S.size+')');return}
+  start(w,'insert('+pos+', '+v+')',C);
+  rec(w,'เรียก `insert(begin()+'+pos+', '+v+')`',C,L.entry,{});
+  rec(w,'`pos = it - begin() = '+pos+'` — ต้องเก็บเป็นตัวเลข เพราะ iterator เดิมจะพังถ้า expand',C,L.pos,{main:kv(pos,'a')});
+  ensure(w,S.size+1,C,L,false);
+  for(i=S.size;i>pos;i--){
+    S.cells[i]={v:S.cells[i-1].v}; S.copies++; curOp(w).copies++;
+    rec(w,'`mData['+i+'] = mData['+(i-1)+']` — เลื่อนถอยหลังทีละช่อง',C,L.shift,{main:{}});
+    w.TL[w.TL.length-1].hl={main:(function(){var o={};o[i-1]='r';o[i]='w';return o})()};
+  }
+  S.cells[pos]={v:v}; S.size++;
+  rec(w,'`mData['+pos+'] = '+v+'; mSize++` → `mSize = '+S.size+'`',C,L.put,{main:kv(pos,'w')});
+}
+function vErase(w,pos){
+  var S=w.S,C='vec_erase',L=CODE[C].L,i;
+  if(isNaN(pos)||pos<0||pos>=S.size){flash('erase ต้องมี 0 ≤ pos < mSize ('+S.size+')');return}
+  start(w,'erase('+pos+')',C);
+  rec(w,'เรียก `erase(begin()+'+pos+')` — ลบค่า `'+S.cells[pos].v+'`',C,L.entry,{main:kv(pos,'f')});
+  for(i=pos;i<S.size-1;i++){
+    S.cells[i]={v:S.cells[i+1].v}; S.copies++; curOp(w).copies++;
+    rec(w,'`*it = *(it+1)` → `mData['+i+'] = mData['+(i+1)+']`',C,L.move,{main:{}});
+    w.TL[w.TL.length-1].hl={main:(function(){var o={};o[i+1]='r';o[i]='w';return o})()};
+  }
+  S.size--;
+  rec(w,'`mSize--` → ตอนนี้ `mSize = '+S.size+'` (ช่องท้ายยังค้างค่าเก่า)',C,L.dec,{main:kv(S.size,'f')});
+}
+function vAt(w,i,checked){
+  var S=w.S,C='vec_at',L=CODE[C].L;
+  start(w,(checked?'at(':'operator[](')+i+')',C);
+  if(isNaN(i)){flash('ต้องใส่เลข index');w.ops.pop();return}
+  if(checked){
+    rec(w,'`rangeCheck('+i+')` — เช็ก `'+i+' < 0 || '+i+' >= mSize('+S.size+')`',C,L.check,{});
+    if(i<0||i>=S.size){rec(w,'นอกช่วง → `throw std::out_of_range`',C,L.thr,{},{err:true,ret:'terminate called after throwing std::out_of_range'});curOp(w).err=true;return}
+    rec(w,'คืน reference ของ `mData['+i+']` → แก้ค่าผ่าน `v.at('+i+') = ...` ได้เลย',C,L.ret,{main:kv(i,'r')},{ret:'→ '+S.cells[i].v});
+  }else{
+    rec(w,'`operator[]` ไม่เรียก `rangeCheck` เลย',C,L.bEntry,{});
+    if(i>=0&&i<S.size){rec(w,'อ่าน `mData['+i+']` ได้ปกติ',C,L.bRet,{main:kv(i,'r')},{ret:'→ '+S.cells[i].v})}
+    else if(i>=0&&i<S.cap){rec(w,'ช่องนี้อยู่ในพื้นที่ reserved (i < mCap แต่ ≥ mSize) → อ่านได้ ไม่ crash แต่เป็นขยะ = undefined behavior',C,L.bRet,{main:kv(i,'f')},{err:true,ret:'→ '+(S.cells[i].v===null?'(ค่าขยะ)':S.cells[i].v+' (ค่าค้างเก่า)')});curOp(w).err=true}
+    else{rec(w,'หลุดออกนอกบล็อกที่ `new` มาเลย ('+i+' ≥ mCap '+S.cap+') → เขียนทับหน่วยความจำคนอื่น',C,L.bRet,{},{err:true,ret:'→ undefined behavior / segmentation fault'});curOp(w).err=true}
+  }
+}
+function vClear(w){
+  var C='vec_resize',L=CODE[C].L;
+  start(w,'clear()',C); w.S.size=0;
+  rec(w,'`mSize = 0` — ไม่คืนหน่วยความจำ `mCap` เท่าเดิม',C,L.clr,{mainAll:'f'});
+}
+function vResize(w,n){
+  var S=w.S,C='vec_resize',L=CODE[C].L,i;
+  if(isNaN(n)||n<0||n>MAXN){flash('resize 0..'+MAXN);return}
+  start(w,'resize('+n+')',C);
+  rec(w,'เรียก `resize('+n+')`',C,L.entry,{});
+  if(n>S.cap)ensure(w,n,C,L,false);
+  if(n>S.size){
+    for(i=S.size;i<n;i++){S.cells[i]={v:'0'};rec(w,'`mData['+i+'] = T()` — เติมค่า default',C,L.fill,{main:kv(i,'w')})}
+  }
+  S.size=n;
+  rec(w,'`mSize = '+n+'`',C,L.set,{});
+}
+/* stack */
+function sPush(w,v){
+  if(full(w))return; var S=w.S,C='stk_push',L=CODE[C].L;
+  start(w,'push('+v+')',C);
+  rec(w,'เรียก `push('+v+')` — ตัวใหม่จะไปอยู่ท้าย `mData` คือยอด stack',C,L.entry,{});
+  ensure(w,S.size+1,C,L,false);
+  S.cells[S.size]={v:v};S.size++;
+  rec(w,'`mData[mSize++] = '+v+'` → ยอดใหม่อยู่ช่อง '+(S.size-1),C,L.store,{main:kv(S.size-1,'w')});
+}
+function sPop(w){
+  var S=w.S,C='stk_pop',L=CODE[C].L;
+  start(w,'pop()',C);
+  if(S.size===0){rec(w,'stack ว่าง → `pop()` เป็น undefined behavior (std::stack ก็ไม่เช็กให้)',C,L.dec,{},{err:true});curOp(w).err=true;return}
+  S.size--;
+  rec(w,'`mSize--` → ค่า `'+S.cells[S.size].v+'` หลุดจากยอด แต่ยังอยู่ในบล็อก',C,L.dec,{main:kv(S.size,'f')});
+}
+function sTop(w){
+  var S=w.S,C='stk_pop',L=CODE[C].L;
+  start(w,'top()',C);
+  if(S.size===0){rec(w,'stack ว่าง → `mData[mSize-1]` คือ `mData[-1]` = undefined behavior',C,L.tRet,{},{err:true});curOp(w).err=true;return}
+  rec(w,'`return mData[mSize-1]` → ช่อง '+(S.size-1)+' — O(1) ไม่ต้องวิ่งหา',C,L.tRet,{main:kv(S.size-1,'r')},{ret:'→ '+S.cells[S.size-1].v});
+}
+/* queue */
+function qPush(w,v){
+  if(full(w))return; var S=w.S,C='q_push',L=CODE[C].L,at;
+  start(w,'push('+v+')',C);
+  rec(w,'เรียก `push('+v+')`',C,L.entry,{});
+  ensure(w,S.size+1,C,L,true);
+  at=(S.front+S.size)%S.cap;
+  S.cells[at]={v:v};S.size++;
+  rec(w,'`mData[(mFront+mSize) % mCap] = mData[('+S.front+'+'+(S.size-1)+') % '+S.cap+'] = mData['+at+']` → ลงช่องถัดจากท้ายคิว แม้มันจะวนกลับไปต้นอาเรย์',C,L.store,{main:kv(at,'w')});
+}
+function qPop(w){
+  var S=w.S,C='q_pop',L=CODE[C].L,old=S.front;
+  start(w,'pop()',C);
+  if(S.size===0){rec(w,'คิวว่าง → `mSize--` underflow = undefined behavior',C,L.dec,{},{err:true});curOp(w).err=true;return}
+  S.front=(S.front+1)%S.cap;S.size--;
+  rec(w,'`mFront = ('+old+'+1) % '+S.cap+' = '+S.front+'; mSize--` → O(1) ไม่ต้องเลื่อนข้อมูลเลย (ต่างจาก v0.1 ที่ใช้ `v.erase(v.begin())`)',C,L.mv,{main:kv(old,'f')});
+}
+function qFB(w,which){
+  var S=w.S,C='q_pop',L=CODE[C].L,i;
+  start(w,which+'()',C);
+  if(S.size===0){rec(w,'คิวว่าง → อ่านไม่ได้ (undefined behavior)',C,which==='front'?L.fr:L.bk,{},{err:true});curOp(w).err=true;return}
+  if(which==='front'){i=S.front;rec(w,'`return mData[mFront]` → ช่อง '+i,C,L.fr,{main:kv(i,'r')},{ret:'→ '+S.cells[i].v})}
+  else{i=(S.front+S.size-1)%S.cap;rec(w,'`return mData[(mFront+mSize-1) % mCap] = mData[('+S.front+'+'+S.size+'-1) % '+S.cap+'] = mData['+i+']`',C,L.bk,{main:kv(i,'r')},{ret:'→ '+S.cells[i].v})}
+}
+
+var OPS={
+ vector:{push_back:vPush,pop_back:vPop,insert:function(w,a,b){vInsert(w,parseInt(a,10),b)},
+   erase:function(w,a){vErase(w,parseInt(a,10))},at:function(w,a){vAt(w,parseInt(a,10),true)},
+   '[]':function(w,a){vAt(w,parseInt(a,10),false)},clear:vClear,resize:function(w,a){vResize(w,parseInt(a,10))}},
+ stack:{push:sPush,pop:sPop,top:sTop},
+ queue:{push:qPush,pop:qPop,front:function(w){qFB(w,'front')},back:function(w){qFB(w,'back')}}
+};
+var ALIAS={
+ vector:{push:'push_back',pb:'push_back',pop:'pop_back',add:'push_back',idx:'[]',get:'at',remove:'erase',del:'erase'},
+ stack:{push_back:'push',pop_back:'pop',peek:'top',add:'push'},
+ queue:{push_back:'push',enqueue:'push',dequeue:'pop',pop_front:'pop',first:'front',last:'back'}
+};
+var STRUCTS={
+ vector:{name:'CP::vector',quick:['push_back 7','pop_back','insert 1 99','erase 0','at 9','[6]','resize 6','clear'],
+   hint:'ลองพิมพ์:  push_back 7   ·   insert 2 99   ·   erase 0   ·   at 9   ·   [6]   ·   random 6   ·   คั่นหลายคำสั่งด้วย ;'},
+ stack:{name:'CP::stack',quick:['push Y','pop','top','random 4'],
+   hint:'ลองพิมพ์:  push Y   ·   pop   ·   top   ·   push a; push b; pop'},
+ queue:{name:'CP::queue',quick:['push 40','pop','front','back','random 5'],
+   hint:'ลองพิมพ์:  push 40   ·   pop   ·   front   ·   back   ·   push 1; push 2; pop; push 3  (ดูวงกลมวนกลับ)'}
+};
+
+/* ---------------- parsing ---------------- */
+function parse(text,kind){
+  var out=[],parts=String(text).replace(/\[\s*(-?\w+)\s*\]/g,' idx $1 ').replace(/[(),]/g,' ').split(/[;\n]/),i,j;
+  for(i=0;i<parts.length;i++){
+    var tk=parts[i].trim().split(/\s+/).filter(Boolean); if(!tk.length)continue;
+    var op=tk[0].toLowerCase(), args=tk.slice(1);
+    if(ALIAS[kind][op])op=ALIAS[kind][op];
+    if(op==='random'){
+      var n=Math.min(parseInt(args[0]||'5',10)||5,20), base=kind==='vector'?'push_back':'push';
+      for(j=0;j<n;j++)out.push({op:base,args:[String(1+Math.floor(Math.random()*99))]});
+      continue;
+    }
+    if(op==='reset'){out.push({op:'reset',args:[]});continue}
+    if(!OPS[kind][op]){out.push({op:'?',args:[tk[0]]});continue}
+    if((op==='push_back'||op==='push')&&args.length>1){
+      for(j=0;j<args.length;j++)out.push({op:op,args:[args[j]]});
+      continue;
+    }
+    out.push({op:op,args:args});
+  }
+  return out;
+}
+
+/* ---------------- view ---------------- */
+var W={vector:null,stack:null,queue:null},cur='vector',timer=null,spd=1,SPEEDS=[1250,620,300],SPDL=['0.5×','1×','2×'];
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function md(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>')}
+function cut(v){var s=String(v);return s.length>6?s.slice(0,5)+'…':s}
+function flash(msg){
+  var el=document.createElement('div');el.className='flash';el.textContent=msg;document.body.appendChild(el);
+  setTimeout(function(){el.remove()},2200);
+}
+function liveAt(S,i,kind){
+  if(kind==='queue'){if(S.size===0)return false;return ((i-S.front+S.cap)%S.cap)<S.size}
+  return i<S.size;
+}
+function slotHTML(S,i,kind,hl,all,isTmp){
+  var live=isTmp?false:liveAt(S,i,kind),arr=isTmp?S.tmp.cells:S.cells,v=arr[i].v,cls='cell',mk='';
+  if(isTmp){cls+=v===null?' empty':''}
+  else if(!live)cls+=v===null?' empty':' stale';
+  var h=hl?hl[i]:null; if(all)h=all;
+  if(h)cls+=' '+h;
+  if(!isTmp){
+    if(kind==='queue'){
+      var parts=[];
+      if(S.size>0&&i===S.front)parts.push('▲front');
+      if(S.size>0&&i===(S.front+S.size-1)%S.cap)parts.push('▲back');
+      if(S.size===0&&i===S.front)parts.push('▲front');
+      mk=parts.join(' ');
+    }else if(kind==='stack'){ if(S.size>0&&i===S.size-1)mk='▲top'; }
+    else{ var p2=[]; if(i===0)p2.push('▲begin'); if(i===S.size)p2.push('▲end'); mk=p2.join(' '); }
+  }
+  return '<div class="slot"><div class="ix">'+i+'</div><div class="'+cls+'" title="'+esc(v===null?'(ยังไม่ถูกเขียน)':v)+'">'+
+    (v===null?'·':esc(cut(v)))+'</div><div class="mk'+(mk.indexOf('back')>=0||mk.indexOf('end')>=0?' b':'')+'">'+mk+'</div></div>';
+}
+function stageHTML(st,kind){
+  var S=st.S,h='',i,inner='';
+  for(i=0;i<S.cap;i++)inner+=slotHTML(S,i,kind,st.hl.main,st.hl.mainAll,false);
+  if(kind==='vector'&&S.size===S.cap)inner+='<div class="slot" style="width:40px"><div class="ix">&nbsp;</div><div style="height:46px"></div><div class="mk b">▲end</div></div>';
+  h+='<div class="block"><div class="blockhead"><em>mData</em> '+hex(S.addr)+
+     ' <span>· '+S.cap+' ช่อง · '+(kind==='queue'?'ใช้จริง '+S.size:'ใช้ '+S.size+' / reserved '+(S.cap-S.size))+'</span></div>'+
+     '<div class="slots">'+inner+'</div></div>';
+  if(S.tmp){
+    var t='';
+    for(i=0;i<S.tmp.cap;i++)t+=slotHTML(S,i,kind,st.hl.tmp,st.hl.tmpAll,true);
+    h+='<div class="block"><div class="blockhead"><em>arr</em> '+hex(S.tmpAddr)+' <span>· บล็อกใหม่ '+S.tmp.cap+' ช่อง</span></div>'+
+       '<div class="slots">'+t+'</div></div>';
+  }
+  if(kind==='queue')h+=ringHTML(st);
+  return h;
+}
+function ringHTML(st){
+  var S=st.S,n=S.cap,R=n>16?104:88,cx=130,cy=130,r=n>24?8:(n>16?11:15),i,svg='',a,x,y,live,v,fill,stroke;
+  for(i=0;i<n;i++){
+    a=(-90+360*i/n)*Math.PI/180; x=cx+R*Math.cos(a); y=cy+R*Math.sin(a);
+    live=liveAt(S,i,'queue'); v=S.cells[i].v;
+    fill=live?'var(--accent-weak)':'transparent'; stroke=live?'var(--accent-fill)':'var(--line)';
+    if(st.hl.main&&st.hl.main[i]){var k=st.hl.main[i];
+      fill=k==='w'?'var(--alloc-weak)':k==='r'?'var(--move-weak)':'var(--free-weak)';
+      stroke=k==='w'?'var(--alloc)':k==='r'?'var(--move)':'var(--free)';}
+    svg+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';
+    if(v!==null&&n<=24)svg+='<text x="'+x.toFixed(1)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="middle" font-family="var(--font-mono)" font-size="10" font-weight="600" fill="'+(live?'var(--fg)':'var(--ghost)')+'">'+esc(cut(v))+'</text>';
+    if(n<=24)svg+='<text x="'+(cx+(R+r+9)*Math.cos(a)).toFixed(1)+'" y="'+(cy+(R+r+9)*Math.sin(a)+3).toFixed(1)+'" text-anchor="middle" font-family="var(--font-mono)" font-size="8.5" fill="var(--muted)">'+i+'</text>';
+  }
+  if(S.size>0){
+    var af=(-90+360*S.front/n)*Math.PI/180, ab=(-90+360*((S.front+S.size-1)%n)/n)*Math.PI/180;
+    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+(R-r-3)*Math.cos(af)).toFixed(1)+'" y2="'+(cy+(R-r-3)*Math.sin(af)).toFixed(1)+'" stroke="var(--accent)" stroke-width="2"/>';
+    svg+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+(R-r-3)*Math.cos(ab)).toFixed(1)+'" y2="'+(cy+(R-r-3)*Math.sin(ab)).toFixed(1)+'" stroke="var(--move)" stroke-width="2" stroke-dasharray="3 3"/>';
+  }
+  svg+='<text x="'+cx+'" y="'+(cy-4)+'" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--accent)">mFront '+S.front+'</text>';
+  svg+='<text x="'+cx+'" y="'+(cy+10)+'" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--move)">back '+(S.size?((S.front+S.size-1)%n):'–')+'</text>';
+  return '<div class="ringwrap"><svg viewBox="0 0 260 260" width="260" height="260" role="img" aria-label="มุมมองวงกลมของคิว">'+svg+'</svg>'+
+    '<p class="note">ช่องที่ '+ (n-1) +' ต่อกลับไปช่อง 0 — ตัวถัดไปของ i คือ <code>(i+1) % mCap</code> คิวเลยวิ่งวนใช้ที่ว่างด้านหน้าได้ โดยไม่ต้องเลื่อนข้อมูล</p></div>';
+}
+function membersHTML(S,kind){
+  var h='';
+  h+='<div class="mem"><b>mData</b><span>'+hex(S.addr)+'</span></div>';
+  h+='<div class="mem"><b>mSize</b><span>'+S.size+'</span></div>';
+  h+='<div class="mem"><b>mCap</b><span>'+S.cap+'</span></div>';
+  if(kind==='queue')h+='<div class="mem"><b>mFront</b><span>'+S.front+'</span></div>';
+  if(kind==='vector'){
+    h+='<div class="mem"><b>begin()</b><span>'+hex(S.addr)+'</span></div>';
+    h+='<div class="mem"><b>end()</b><span>'+hex(S.addr+S.size*4)+'</span></div>';
+  }
+  if(kind==='stack')h+='<div class="mem"><b>top()</b><span>'+(S.size?esc(S.cells[S.size-1].v):'–')+'</span></div>';
+  if(kind==='queue'){
+    h+='<div class="mem"><b>front()</b><span>'+(S.size?esc(S.cells[S.front].v):'–')+'</span></div>';
+    h+='<div class="mem"><b>back()</b><span>'+(S.size?esc(S.cells[(S.front+S.size-1)%S.cap].v):'–')+'</span></div>';
+  }
+  return h;
+}
+function codeHTML(st){
+  if(!st.code||!CODE[st.code])return'<span class="l cm">เลือกคำสั่งเพื่อดูโค้ด</span>';
+  return CODE[st.code].src.map(function(line,i){
+    var txt=esc(line).replace(/(\/\/.*)$/,'<span class="cm">$1</span>');
+    return '<span class="l'+(i===st.line?' on':'')+'" data-i="'+i+'">'+(txt||'&nbsp;')+'</span>';
+  }).join('');
+}
+function sparkHTML(w){
+  var pushes=w.ops.filter(function(o){return/^push/.test(o.label)}).slice(-42);
+  if(pushes.length<2)return '<div class="note" style="max-width:none">push อีกสองสามครั้งแล้วจะเห็นกราฟ “จำนวน copy ต่อหนึ่ง push”</div>';
+  var mx=Math.max(1,Math.max.apply(null,pushes.map(function(o){return o.copies}))),
+      bw=100/pushes.length,bars='';
+  pushes.forEach(function(o,i){
+    var h=o.copies===0?3:Math.max(4,o.copies/mx*40);
+    bars+='<rect x="'+(i*bw+bw*0.15).toFixed(2)+'" y="'+(44-h).toFixed(2)+'" width="'+(bw*0.7).toFixed(2)+'" height="'+h.toFixed(2)+
+      '" fill="'+(o.copies?'var(--accent-fill)':'var(--line)')+'" rx="0.6"><title>push #'+(i+1)+' → copy '+o.copies+'</title></rect>';
+  });
+  return '<svg viewBox="0 0 100 46" preserveAspectRatio="none">'+bars+'</svg>'+
+    '<div class="note" style="max-width:none;margin-top:4px">copy ต่อหนึ่ง push — แท่งสูงคือตอน expand ยิ่ง push ไปแท่งสูงยิ่งห่าง เฉลี่ยแล้วจึงเป็น O(1)</div>';
+}
+function statsHTML(w,st){
+  var pushes=w.ops.filter(function(o){return/^push/.test(o.label)}).length;
+  return '<div class="stat"><b>'+st.S.copies+'</b><span>copy ทั้งหมด</span></div>'+
+    '<div class="stat"><b>'+w.expands+'</b><span>expand</span></div>'+
+    '<div class="stat"><b>'+pushes+'</b><span>push</span></div>'+
+    '<div class="stat"><b>'+(pushes?(st.S.copies/pushes).toFixed(2):'0.00')+'</b><span>copy / push</span></div>';
+}
+function traceHTML(w,st){
+  return w.ops.map(function(o,i){
+    var b=o.err?'<span class="badge">UB</span>':(o.expands?'<span class="badge" style="background:var(--accent-weak);color:var(--accent)">expand ×'+o.expands+'</span>':'');
+    return '<button data-op="'+i+'" class="'+(i===st.op?'on':'')+'"><span>'+esc(o.label)+'</span>'+b+'</button>';
+  }).reverse().join('');
+}
+function render(){
+  var w=W[cur],st=w.TL[w.idx];
+  $('#members').innerHTML=membersHTML(st.S,cur);
+  $('#stage').innerHTML=stageHTML(st,cur);
+  var sb=$('#step');
+  sb.className='step'+(st.err?' err':'');
+  sb.innerHTML='<div class="n">'+(w.idx+1)+'/'+w.TL.length+'</div><div class="d">'+md(st.desc)+
+    (st.ret?'<span class="ret">'+esc(st.ret)+'</span>':'')+'</div>';
+  $('#codeTitle').textContent=st.code?CODE[st.code].t:'–';
+  $('#code').innerHTML=codeHTML(st);
+  var on=$('#code').querySelector('.l.on');
+  if(on)$('#code').scrollTop=Math.max(0,on.offsetTop-$('#code').clientHeight/2);
+  $('#bar').style.width=(w.TL.length<2?100:(w.idx/(w.TL.length-1)*100))+'%';
+  $('#ctr').textContent=(w.idx+1)+' / '+w.TL.length;
+  $('#stats').innerHTML=statsHTML(w,st);
+  $('#spark').innerHTML=sparkHTML(w);
+  $('#trace').innerHTML=traceHTML(w,st);
+}
+function stop(){clearTimeout(timer);timer=null;$('#playBtn').textContent='▶'}
+function tick(){
+  var w=W[cur];
+  if(w.idx<w.TL.length-1){w.idx++;render();timer=setTimeout(tick,SPEEDS[spd])}else stop();
+}
+function play(){
+  var w=W[cur]; if(timer){stop();return}
+  if(w.idx>=w.TL.length-1)return;
+  $('#playBtn').textContent='⏸'; timer=setTimeout(tick,SPEEDS[spd]);
+}
+function go(i){stop();var w=W[cur];w.idx=Math.max(0,Math.min(i,w.TL.length-1));render()}
+
+function run(text){
+  var w=W[cur],startLen=w.TL.length,cmds=parse(text,cur),i,bad=0;
+  if(!cmds.length){flash('ยังไม่ได้พิมพ์คำสั่ง');return}
+  for(i=0;i<cmds.length;i++){
+    if(cmds[i].op==='reset'){resetWorld();return}
+    if(cmds[i].op==='?'){bad++;flash('`'+cmds[i].args[0]+'` ไม่มีใน '+STRUCTS[cur].name);continue}
+    OPS[cur][cmds[i].op].apply(null,[w].concat(cmds[i].args));
+  }
+  if(w.TL.length>startLen){stop();w.idx=startLen;render();play()}
+  else if(!bad)render();
+}
+function resetWorld(){stop();W[cur]=newWorld(cur);W[cur].idx=W[cur].TL.length-1;render();flash(STRUCTS[cur].name+' ใหม่ mCap = 1')}
+
+/* ---------------- wiring ---------------- */
+function buildTabs(){
+  $('#tabs').innerHTML=Object.keys(STRUCTS).map(function(k){
+    return '<button class="tab" role="tab" data-k="'+k+'" aria-selected="'+(k===cur)+'">'+STRUCTS[k].name+'</button>';
+  }).join('');
+}
+function buildQuick(){
+  $('#quick').innerHTML=STRUCTS[cur].quick.map(function(q){
+    return '<button class="btn mono" data-q="'+esc(q)+'">'+esc(q)+'</button>';
+  }).join('')+'<button class="btn mono" data-q="random 5">random 5</button>';
+  $('#hint').textContent=STRUCTS[cur].hint;
+  $('#cmd').placeholder=STRUCTS[cur].quick[0];
+}
+$('#tabs').addEventListener('click',function(e){
+  var b=e.target.closest('[data-k]'); if(!b)return;
+  stop(); cur=b.dataset.k; buildTabs(); buildQuick(); render();
+});
+$('#quick').addEventListener('click',function(e){
+  var b=e.target.closest('[data-q]'); if(!b)return; run(b.dataset.q);
+});
+$('#trace').addEventListener('click',function(e){
+  var b=e.target.closest('[data-op]'); if(!b)return; go(W[cur].ops[+b.dataset.op].start);
+});
+$('#runBtn').addEventListener('click',function(){run($('#cmd').value);$('#cmd').value=''});
+$('#cmd').addEventListener('keydown',function(e){if(e.key==='Enter'){run(this.value);this.value=''}});
+$('#resetBtn').addEventListener('click',resetWorld);
+$('#first').addEventListener('click',function(){go(0)});
+$('#prev').addEventListener('click',function(){go(W[cur].idx-1)});
+$('#next').addEventListener('click',function(){go(W[cur].idx+1)});
+$('#last').addEventListener('click',function(){go(W[cur].TL.length-1)});
+$('#playBtn').addEventListener('click',play);
+$('#spd').addEventListener('click',function(){spd=(spd+1)%3;this.textContent=SPDL[spd]});
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'){go(W[cur].idx+1)}
+  else if(e.key==='ArrowLeft'){go(W[cur].idx-1)}
+  else if(e.key===' '){e.preventDefault();play()}
+});
+
+/* seed each container with the example from the slides */
+function seed(){
+  W.vector=newWorld('vector'); ['10','3','1','5','9'].forEach(function(v){vPush(W.vector,v)});
+  W.stack=newWorld('stack'); ['A','B','X','A'].forEach(function(v){sPush(W.stack,v)});
+  W.queue=newWorld('queue'); ['10','20','30'].forEach(function(v){qPush(W.queue,v)}); qPop(W.queue);
+  Object.keys(W).forEach(function(k){W[k].idx=W[k].TL.length-1});
+}
+seed(); buildTabs(); buildQuick(); render();
+})();
+</script>
