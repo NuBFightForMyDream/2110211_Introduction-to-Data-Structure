@@ -54,18 +54,23 @@ input.cmd:focus-visible,button:focus-visible{outline:2px solid var(--accent);out
 .btn:hover{border-color:var(--accent-fill)}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .btn.mono{font-family:var(--font-mono);font-size:12px}
-.btn.sq{width:36px;height:34px;display:grid;place-items:center;padding:0;font-size:13px}
 .hint{color:var(--muted);font-size:11.5px;font-family:var(--font-mono);margin-top:8px}
 .grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:13px;align-items:start}
 .col{display:flex;flex-direction:column;gap:13px;min-width:0}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
-.members{display:flex;flex-wrap:wrap;gap:7px}
-.mem{font-family:var(--font-mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;display:flex;gap:7px;align-items:baseline}
-.mem b{font-weight:600;color:var(--muted);font-size:10px;letter-spacing:.06em}
-.mem span{font-variant-numeric:tabular-nums;font-weight:600}
-.block{display:flex;flex-direction:column;gap:5px;margin-top:12px}
-.blockhead{display:flex;gap:9px;align-items:baseline;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);flex-wrap:wrap}
-.blockhead em{font-style:normal;color:var(--fg);font-weight:600}
+.members{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.mem{font-family:var(--font-mono);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px 9px;transition:background .18s,border-color .18s}
+.mem b{display:block;font-weight:600;color:var(--muted);font-size:14px}
+.mem span{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.25}
+.mem.chg{background:var(--accent-weak);border-color:var(--accent-fill)}
+.mem.chg b{color:var(--accent)}
+.derived{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dv{font-family:var(--font-mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;display:flex;gap:7px;align-items:baseline}
+.dv span{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+.block{display:flex;flex-direction:column;gap:5px;margin-top:14px}
+.blockhead{display:flex;gap:9px;align-items:baseline;font-family:var(--font-mono);font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.blockhead em{font-style:normal;color:var(--fg);font-weight:600;font-size:15px}
+.blockhead strong{color:var(--fg);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
 .slots{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px}
 .slot{flex:0 0 auto;width:56px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .ix{font-family:var(--font-mono);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -78,6 +83,17 @@ input.cmd:focus-visible,button:focus-visible{outline:2px solid var(--accent);out
 .cell.a{background:var(--accent-weak);border-color:var(--accent-fill)}
 .mk{height:13px;font-family:var(--font-mono);font-size:9.5px;color:var(--accent);white-space:nowrap}
 .mk.b{color:var(--move)}
+/* CP::stack: upright cylinder, slot 0 at the bottom */
+.tubes{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end;margin-top:14px}
+.tcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.tcol .blockhead{max-width:230px}
+.cyl{display:flex;flex-direction:column;width:max-content;max-width:100%}
+.rim{position:relative;z-index:1;height:16px;border:3px solid var(--cell-line);border-radius:50%;margin-bottom:-8px}
+.tube{display:flex;flex-direction:column-reverse;gap:4px;max-height:440px;overflow-y:auto;padding:14px 12px 16px;border:3px solid var(--cell-line);border-top:0;border-radius:0 0 50% 50% / 0 0 18px 18px;background:var(--panel2)}
+.tube .slot{flex-direction:row;width:auto;gap:8px}
+.tube .ix{width:20px;text-align:right}
+.tube .cell{width:92px;height:34px}
+.tube .mk{width:42px;height:auto}
 @media(prefers-reduced-motion:reduce){.cell{transition:none}}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1.5px solid var(--cell-line)}
@@ -88,10 +104,18 @@ input.cmd:focus-visible,button:focus-visible{outline:2px solid var(--accent);out
 .step .d code{font-family:var(--font-mono);font-size:12.5px;background:var(--panel);border:1px solid var(--line);padding:0 4px;border-radius:4px}
 .step .ret{display:block;margin-top:3px;font-family:var(--font-mono);font-size:12px;color:var(--move)}
 .step.err .ret{color:var(--free)}
-.player{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.track{flex:1 1 140px;min-width:100px;height:6px;border-radius:3px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
+.progress{display:flex;gap:10px;align-items:center;margin-top:12px}
+.track{flex:1 1 auto;min-width:60px;height:6px;border-radius:3px;background:var(--panel2);border:1px solid var(--line);overflow:hidden}
 .track i{display:block;height:100%;background:var(--accent-fill);transition:width .15s}
-.ctr{font-family:var(--font-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ctr{font-family:var(--font-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.transport{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.9fr);gap:6px;margin-top:10px}
+.pbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:54px;padding:7px 4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);font-size:11.5px;font-weight:600;line-height:1.2}
+.pbtn svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pbtn:hover:not(:disabled){border-color:var(--accent-fill)}
+.pbtn:disabled{opacity:.38;cursor:default}
+.pbtn.play{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pbtn.spd{margin-left:8px}
+.pbtn .v{font-family:var(--font-mono);font-size:14px;line-height:18px}
 pre.code{margin:8px 0 0;max-height:430px;overflow:auto;font-family:var(--font-mono);font-size:12px;line-height:1.55;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 0}
 pre.code .l{display:block;padding:0 12px;white-space:pre;border-left:3px solid transparent}
 pre.code .l.on{background:var(--accent-weak);border-left-color:var(--accent-fill)}
@@ -137,7 +161,7 @@ pre.code .cm{color:var(--muted)}
     <div class="col">
       <section class="panel">
         <div class="lbl">Member data</div>
-        <div class="members" id="members" style="margin-top:8px"></div>
+        <div id="members" style="margin-top:8px"></div>
         <div id="stage"></div>
         <div class="legend">
           <span><i style="background:var(--alloc-weak);border-color:var(--alloc)"></i>เขียน</span>
@@ -150,15 +174,17 @@ pre.code .cm{color:var(--muted)}
       <section class="panel">
         <div class="lbl">Step</div>
         <div class="step" id="step" style="margin-top:8px"><div class="n">–</div><div class="d">พร้อมแล้ว</div></div>
-        <div class="player">
-          <button class="btn sq" id="first" title="ไปต้นสุด">⏮</button>
-          <button class="btn sq" id="prev" title="ย้อน 1 สเต็ป">◀</button>
-          <button class="btn sq" id="playBtn" title="เล่น / หยุด">▶</button>
-          <button class="btn sq" id="next" title="ถัดไป 1 สเต็ป">▶|</button>
-          <button class="btn sq" id="last" title="ไปท้ายสุด">⏭</button>
-          <button class="btn mono" id="spd">1×</button>
+        <div class="progress">
           <div class="track"><i id="bar" style="width:0%"></i></div>
           <div class="ctr" id="ctr">0 / 0</div>
+        </div>
+        <div class="transport">
+          <button class="pbtn" id="first" title="ไปสเต็ปแรก (Home)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 3.5v11"/><path d="M13.5 4 8.5 9l5 5"/></svg><span>First</span></button>
+          <button class="pbtn" id="prev" title="ย้อน 1 สเต็ป (←)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M11.5 4 6.5 9l5 5"/></svg><span>Prev</span></button>
+          <button class="pbtn play" id="playBtn" title="เล่น / หยุด (Space)"><svg viewBox="0 0 18 18" aria-hidden="true" id="playIco"></svg><span id="playLbl">Play</span></button>
+          <button class="pbtn" id="next" title="ถัดไป 1 สเต็ป (→)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6.5 4l5 5-5 5"/></svg><span>Next</span></button>
+          <button class="pbtn" id="last" title="ไปสเต็ปสุดท้าย (End)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M14 3.5v11"/><path d="M4.5 4l5 5-5 5"/></svg><span>Last</span></button>
+          <button class="pbtn spd" id="spd" title="ความเร็วตอนกด Play"><span class="v" id="spdV">1×</span><span>Speed</span></button>
         </div>
       </section>
     </div>
@@ -351,9 +377,10 @@ L:{entry:0,mv:1,dec:2,fr:5,bk:6}}
 };
 
 /* ---------------- engine ---------------- */
-var ADDR=0x55a140, MAXN=72;
-function newAddr(){ADDR+=0x60;return ADDR}
-function hex(n){return '0x'+n.toString(16)}
+/* made-up addresses that are easy to read: first block 1000, each later new[] gets 2000, 3000, ... */
+var ADDR0=1000, ADDR_STEP=1000, ELEM=4, MAXN=72;
+function newAddr(w){var a=w.heap;w.heap+=ADDR_STEP;return a}
+function fmtAddr(n){return String(n)}
 function cells(n){var a=[],i;for(i=0;i<n;i++)a.push({v:null});return a}
 function clone(S){
   return{cap:S.cap,size:S.size,front:S.front,addr:S.addr,tmpAddr:S.tmpAddr,copies:S.copies,
@@ -361,10 +388,10 @@ function clone(S){
     tmp:S.tmp?{cap:S.tmp.cap,cells:S.tmp.cells.map(function(c){return{v:c.v}})}:null};
 }
 function newWorld(kind){
-  var w={kind:kind,TL:[],ops:[],idx:0,expands:0,
-    S:{cap:1,size:0,front:0,addr:newAddr(),tmpAddr:null,copies:0,cells:cells(1),tmp:null}};
+  var w={kind:kind,TL:[],ops:[],idx:0,expands:0,heap:ADDR0,S:null};
+  w.S={cap:1,size:0,front:0,addr:newAddr(w),tmpAddr:null,copies:0,cells:cells(1),tmp:null};
   start(w,kind==='vector'?'vector<T> v;':(kind==='stack'?'stack<T> s;':'queue<T> q;'),null);
-  rec(w,'default constructor: `mData = new T[1]()`, `mSize = 0`, `mCap = 1`',null,-1,{});
+  rec(w,'default constructor: `mData = new T[1]()` (สมมติได้ address '+fmtAddr(w.S.addr)+'), `mSize = 0`, `mCap = 1`',null,-1,{});
   return w;
 }
 function start(w,label,code){w.ops.push({label:label,start:w.TL.length,copies:0,expands:0,err:false,code:code})}
@@ -377,8 +404,8 @@ function curOp(w){return w.ops[w.ops.length-1]}
 
 function expand(w,cap,code,L,circ){
   var S=w.S,i,src;
-  S.tmp={cap:cap,cells:cells(cap)}; S.tmpAddr=newAddr();
-  rec(w,'`new T['+cap+']()` — จองบล็อกใหม่ที่ '+hex(S.tmpAddr)+' (ของเดิมยังอยู่)',code,L.alloc,{tmpAll:'a'});
+  S.tmp={cap:cap,cells:cells(cap)}; S.tmpAddr=newAddr(w);
+  rec(w,'`new T['+cap+']()` — จองบล็อกใหม่ที่ address '+fmtAddr(S.tmpAddr)+' (ของเดิมที่ '+fmtAddr(S.addr)+' ยังอยู่)',code,L.alloc,{tmpAll:'a'});
   for(i=0;i<S.size;i++){
     src=circ?((S.front+i)%S.cap):i;
     S.tmp.cells[i].v=S.cells[src].v; S.copies++; curOp(w).copies++;
@@ -386,10 +413,10 @@ function expand(w,cap,code,L,circ){
       code,L.copy,{main:{},tmp:{}} , null);
     w.TL[w.TL.length-1].hl={main:kv(src,'r'),tmp:kv(i,'w')};
   }
-  rec(w,'`delete [] mData` — คืนบล็อกเก่า '+hex(S.addr)+' ไม่งั้น memory leak',code,L.del,{mainAll:'f'});
+  rec(w,'`delete [] mData` — คืนบล็อกเก่าที่ '+fmtAddr(S.addr)+' ไม่งั้น memory leak',code,L.del,{mainAll:'f'});
   S.cells=S.tmp.cells; S.cap=cap; S.addr=S.tmpAddr; S.tmp=null; S.tmpAddr=null;
   if(circ) S.front=0;
-  rec(w,'`mData = arr; mCap = '+cap+'`'+(circ?'`; mFront = 0`':'')+' — ย้ายเสร็จ',code,L.assign,{mainAll:'a'});
+  rec(w,'`mData = arr; mCap = '+cap+'`'+(circ?'`; mFront = 0`':'')+' — ย้ายเสร็จ `mData` ชี้ไปที่ '+fmtAddr(S.addr),code,L.assign,{mainAll:'a'});
   w.expands++; curOp(w).expands++;
 }
 function kv(k,v){var o={};o[k]=v;return o}
@@ -597,25 +624,28 @@ function slotHTML(S,i,kind,hl,all,isTmp){
       if(S.size>0&&i===(S.front+S.size-1)%S.cap)parts.push('▲back');
       if(S.size===0&&i===S.front)parts.push('▲front');
       mk=parts.join(' ');
-    }else if(kind==='stack'){ if(S.size>0&&i===S.size-1)mk='▲top'; }
+    }else if(kind==='stack'){ if(S.size>0&&i===S.size-1)mk='◀ top'; }
     else{ var p2=[]; if(i===0)p2.push('▲begin'); if(i===S.size)p2.push('▲end'); mk=p2.join(' '); }
   }
   return '<div class="slot"><div class="ix">'+i+'</div><div class="'+cls+'" title="'+esc(v===null?'(ยังไม่ถูกเขียน)':v)+'">'+
     (v===null?'·':esc(cut(v)))+'</div><div class="mk'+(mk.indexOf('back')>=0||mk.indexOf('end')>=0?' b':'')+'">'+mk+'</div></div>';
 }
+function blockHTML(name,addr,info,slots,tube){
+  var head='<div class="blockhead"><em>'+name+'</em> → <strong>'+fmtAddr(addr)+'</strong> <span>· '+info+'</span></div>';
+  if(tube)return '<div class="tcol">'+head+'<div class="cyl"><div class="rim"></div><div class="tube">'+slots+'</div></div></div>';
+  return '<div class="block">'+head+'<div class="slots">'+slots+'</div></div>';
+}
 function stageHTML(st,kind){
-  var S=st.S,h='',i,inner='';
+  var S=st.S,h='',i,inner='',tube=kind==='stack';
   for(i=0;i<S.cap;i++)inner+=slotHTML(S,i,kind,st.hl.main,st.hl.mainAll,false);
   if(kind==='vector'&&S.size===S.cap)inner+='<div class="slot" style="width:40px"><div class="ix">&nbsp;</div><div style="height:46px"></div><div class="mk b">▲end</div></div>';
-  h+='<div class="block"><div class="blockhead"><em>mData</em> '+hex(S.addr)+
-     ' <span>· '+S.cap+' ช่อง · '+(kind==='queue'?'ใช้จริง '+S.size:'ใช้ '+S.size+' / reserved '+(S.cap-S.size))+'</span></div>'+
-     '<div class="slots">'+inner+'</div></div>';
+  h+=blockHTML('mData',S.addr,S.cap+' ช่อง · '+(kind==='queue'?'ใช้จริง '+S.size:'ใช้ '+S.size+' / reserved '+(S.cap-S.size)),inner,tube);
   if(S.tmp){
     var t='';
     for(i=0;i<S.tmp.cap;i++)t+=slotHTML(S,i,kind,st.hl.tmp,st.hl.tmpAll,true);
-    h+='<div class="block"><div class="blockhead"><em>arr</em> '+hex(S.tmpAddr)+' <span>· บล็อกใหม่ '+S.tmp.cap+' ช่อง</span></div>'+
-       '<div class="slots">'+t+'</div></div>';
+    h+=blockHTML('arr',S.tmpAddr,'บล็อกใหม่ '+S.tmp.cap+' ช่อง',t,tube);
   }
+  if(tube)h='<div class="tubes">'+h+'</div>';
   if(kind==='queue')h+=ringHTML(st);
   return h;
 }
@@ -642,22 +672,24 @@ function ringHTML(st){
   return '<div class="ringwrap"><svg viewBox="0 0 260 260" width="260" height="260" role="img" aria-label="มุมมองวงกลมของคิว">'+svg+'</svg>'+
     '<p class="note">ช่องที่ '+ (n-1) +' ต่อกลับไปช่อง 0 — ตัวถัดไปของ i คือ <code>(i+1) % mCap</code> คิวเลยวิ่งวนใช้ที่ว่างด้านหน้าได้ โดยไม่ต้องเลื่อนข้อมูล</p></div>';
 }
-function membersHTML(S,kind){
-  var h='';
-  h+='<div class="mem"><b>mData</b><span>'+hex(S.addr)+'</span></div>';
-  h+='<div class="mem"><b>mSize</b><span>'+S.size+'</span></div>';
-  h+='<div class="mem"><b>mCap</b><span>'+S.cap+'</span></div>';
-  if(kind==='queue')h+='<div class="mem"><b>mFront</b><span>'+S.front+'</span></div>';
+function membersHTML(S,kind,P){
+  function mem(name,val,changed){return '<div class="mem'+(changed?' chg':'')+'"><b>'+name+'</b><span>'+val+'</span></div>'}
+  function dv(name,val,tip){return '<div class="dv"'+(tip?' title="'+tip+'"':'')+'>'+name+'<span>'+val+'</span></div>'}
+  var h='',d='';
+  h+=mem('mData',fmtAddr(S.addr),P&&P.addr!==S.addr);
+  h+=mem('mSize',S.size,P&&P.size!==S.size);
+  h+=mem('mCap',S.cap,P&&P.cap!==S.cap);
+  if(kind==='queue')h+=mem('mFront',S.front,P&&P.front!==S.front);
   if(kind==='vector'){
-    h+='<div class="mem"><b>begin()</b><span>'+hex(S.addr)+'</span></div>';
-    h+='<div class="mem"><b>end()</b><span>'+hex(S.addr+S.size*4)+'</span></div>';
+    d+=dv('begin()',fmtAddr(S.addr),'= mData');
+    d+=dv('end()',fmtAddr(S.addr+S.size*ELEM),'= begin() + mSize × '+ELEM+' ไบต์ (สมมติ sizeof(T) = '+ELEM+')');
   }
-  if(kind==='stack')h+='<div class="mem"><b>top()</b><span>'+(S.size?esc(S.cells[S.size-1].v):'–')+'</span></div>';
+  if(kind==='stack')d+=dv('top()',S.size?esc(S.cells[S.size-1].v):'–');
   if(kind==='queue'){
-    h+='<div class="mem"><b>front()</b><span>'+(S.size?esc(S.cells[S.front].v):'–')+'</span></div>';
-    h+='<div class="mem"><b>back()</b><span>'+(S.size?esc(S.cells[(S.front+S.size-1)%S.cap].v):'–')+'</span></div>';
+    d+=dv('front()',S.size?esc(S.cells[S.front].v):'–');
+    d+=dv('back()',S.size?esc(S.cells[(S.front+S.size-1)%S.cap].v):'–');
   }
-  return h;
+  return '<div class="members">'+h+'</div><div class="derived">'+d+'</div>';
 }
 function codeHTML(st){
   if(!st.code||!CODE[st.code])return'<span class="l cm">เลือกคำสั่งเพื่อดูโค้ด</span>';
@@ -694,7 +726,7 @@ function traceHTML(w,st){
 }
 function render(){
   var w=W[cur],st=w.TL[w.idx];
-  $('#members').innerHTML=membersHTML(st.S,cur);
+  $('#members').innerHTML=membersHTML(st.S,cur,w.idx>0?w.TL[w.idx-1].S:null);
   $('#stage').innerHTML=stageHTML(st,cur);
   var sb=$('#step');
   sb.className='step'+(st.err?' err':'');
@@ -709,8 +741,19 @@ function render(){
   $('#stats').innerHTML=statsHTML(w,st);
   $('#spark').innerHTML=sparkHTML(w);
   $('#trace').innerHTML=traceHTML(w,st);
+  syncPlayer();
 }
-function stop(){clearTimeout(timer);timer=null;$('#playBtn').textContent='▶'}
+var ICON={play:'<path d="M6 3.5v11L15 9z" fill="currentColor" stroke-width="1.5"/>',
+  pause:'<path d="M6 4v10M12 4v10" stroke-width="3"/>'};
+function syncPlayer(){
+  var w=W[cur],atStart=w.idx<=0,atEnd=w.idx>=w.TL.length-1,on=!!timer;
+  $('#first').disabled=$('#prev').disabled=atStart;
+  $('#next').disabled=$('#last').disabled=atEnd;
+  $('#playBtn').disabled=atEnd&&!on;
+  $('#playIco').innerHTML=on?ICON.pause:ICON.play;
+  $('#playLbl').textContent=on?'Pause':'Play';
+}
+function stop(){clearTimeout(timer);timer=null;syncPlayer()}
 function tick(){
   var w=W[cur];
   if(w.idx<w.TL.length-1){w.idx++;render();timer=setTimeout(tick,SPEEDS[spd])}else stop();
@@ -718,7 +761,7 @@ function tick(){
 function play(){
   var w=W[cur]; if(timer){stop();return}
   if(w.idx>=w.TL.length-1)return;
-  $('#playBtn').textContent='⏸'; timer=setTimeout(tick,SPEEDS[spd]);
+  timer=setTimeout(tick,SPEEDS[spd]); syncPlayer();
 }
 function go(i){stop();var w=W[cur];w.idx=Math.max(0,Math.min(i,w.TL.length-1));render()}
 
@@ -766,12 +809,14 @@ $('#prev').addEventListener('click',function(){go(W[cur].idx-1)});
 $('#next').addEventListener('click',function(){go(W[cur].idx+1)});
 $('#last').addEventListener('click',function(){go(W[cur].TL.length-1)});
 $('#playBtn').addEventListener('click',play);
-$('#spd').addEventListener('click',function(){spd=(spd+1)%3;this.textContent=SPDL[spd]});
+$('#spd').addEventListener('click',function(){spd=(spd+1)%3;$('#spdV').textContent=SPDL[spd]});
 document.addEventListener('keydown',function(e){
   if(e.target.tagName==='INPUT')return;
   if(e.key==='ArrowRight'){go(W[cur].idx+1)}
   else if(e.key==='ArrowLeft'){go(W[cur].idx-1)}
-  else if(e.key===' '){e.preventDefault();play()}
+  else if(e.key==='Home'){e.preventDefault();go(0)}
+  else if(e.key==='End'){e.preventDefault();go(W[cur].TL.length-1)}
+  else if(e.key===' '&&e.target.tagName!=='BUTTON'){e.preventDefault();play()}
 });
 
 /* seed each container with the example from the slides */
