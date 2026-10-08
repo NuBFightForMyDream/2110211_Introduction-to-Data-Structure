@@ -10,6 +10,7 @@ using namespace std;
 
 class DigitalWallet {
   // you can declare variables or write new function
+  
 
  public:
   void add_money(size_t time, string person_id, int amount, size_t duration) {
