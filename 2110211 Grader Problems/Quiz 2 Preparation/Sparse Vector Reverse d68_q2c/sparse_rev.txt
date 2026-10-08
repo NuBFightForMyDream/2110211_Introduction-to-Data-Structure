@@ -1,0 +1,74 @@
+/*
+ * Task: Sparse Vector Range Reverse (d68_q2c_sparse_reverse)
+ *
+ * แนวคิด:
+ *   - CP::sparse_vector เก็บข้อมูลใน std::map โดยเก็บเฉพาะช่องที่มีข้อมูล
+ *   - range_reverse (ใน code จริงใช้ชื่อ range_reserve) ต้อง reverse ช่วง [l, r] ทั้งหมด
+ *   - หากช่อง k มีค่า v และ l <= k <= r หลัง reverse จะอยู่ที่ช่อง (l + r - k) ด้วยค่า v เดิม
+ *   - ช่องว่างยังคงว่างอยู่ เพียงแค่ตำแหน่งกระจกรอบกลางช่วงถูกสลับกัน
+ *
+ * หมายเหตุ: โจทย์สะกดชื่อฟังก์ชันเป็น range_reverse แต่ใน header จริงใช้ชื่อ range_reserve
+ *
+ * ฟังก์ชันที่ต้องเขียน:
+ *   - range_reserve(l, r) - reverse ช่วง [l, r] (ส่วนอื่นๆ ถูกเขียนไว้แล้วใน sparse_vector.h)
+ *
+ * ความซับซ้อนของ range_reserve:
+ *   - วนแค่ entry ใน map ที่มี key อยู่ในช่วง [l, r] เท่านั้น
+ *   - แต่ละ entry ใช้ O(log n) ในการ lookup และ insert
+ *   - ถ้ามี k ค่าในช่วง ใช้เวลา O(k log n)
+ *   - เหมาะสมตามข้อกำหนด n = จำนวน operation + จำนวนค่าในช่วงที่ถูก reverse
+ */
+
+#ifndef __STUDENT_H_
+#define __STUDENT_H_
+
+#include "sparse_vector.h"
+
+// range_reserve(l, r): reverse ช่วง [l, r] ของ sparse_vector
+//   - ช่อง k ที่มีค่า (l <= k <= r) จะย้ายไปช่อง (l + r - k) โดยค่าคงเดิม
+//   - ช่องว่างยังว่างอยู่
+//
+// วิธีทำ:
+//   1. หาช่วง iterator ที่ตรงกับ key อยู่ใน [l, r]
+//   2. เก็บ entry ในช่วงลง vector (pair<key, value>)
+//   3. ลบ entry เหล่านั้นออกจาก map
+//   4. ใส่กลับเข้าไปด้วย key ใหม่ = l + r - key_เดิม
+//
+// เหตุผลที่แยกลบแล้วค่อยใส่ใหม่:
+//   - key ใหม่อาจชนกับ key อื่นในช่วงที่ยังไม่ได้ย้าย ถ้าย้ายทีละตัวแบบสดๆ อาจเกิดการเขียนทับ
+//   - ลบหมดก่อนแล้วค่อยใส่ใหม่ทีเดียวปลอดภัยกว่า
+template <typename T>
+void CP::sparse_vector<T>::range_reserve(int l, int r)
+{
+    // ป้องกันกรณีที่ช่วงไม่ถูกต้อง (ช่วงมีตัวเดียวหรือว่างเปล่า ไม่ต้องทำอะไร)
+    if (l >= r) return;
+
+    // หา iterator เริ่มต้นและสิ้นสุดของช่วง [l, r] ใน mData
+    // lower_bound(l) = ตัวแรกที่ key >= l
+    // upper_bound(r) = ตัวแรกที่ key > r
+    auto it_lo = mData.lower_bound(l);
+    auto it_hi = mData.upper_bound(r);
+
+    // เก็บ entry ในช่วงลง buffer ชั่วคราว
+    std::vector<std::pair<int, T>> buffer;
+    for (auto it = it_lo; it != it_hi; ++it) {
+        buffer.push_back({it->first, it->second});
+    }
+
+    // ลบ entry ในช่วงออกจาก mData ทั้งหมดก่อน
+    mData.erase(it_lo, it_hi);
+
+    // ใส่กลับเข้าไปด้วย key ใหม่ = l + r - key_เดิม
+    // ใช้ insert hint เพื่อให้มีประสิทธิภาพดีขึ้น
+    //   - key_เดิมใน buffer เรียงน้อยไปมาก (จาก lower_bound ถึง upper_bound)
+    //   - key_ใหม่ = l + r - key_เดิม จึงเรียงมากไปน้อย
+    //   - loop จากหลังมาหน้าเพื่อให้ key_ใหม่เรียงน้อยไปมาก
+    //   - ใส่ตามลำดับเรียงพร้อม hint ที่ end() ปัจจุบันในช่วงที่เพิ่งใส่
+    auto hint = mData.end();
+    for (auto it = buffer.rbegin(); it != buffer.rend(); ++it) {
+        int new_key = l + r - it->first;
+        hint = mData.insert(hint, {new_key, it->second});
+    }
+}
+
+#endif

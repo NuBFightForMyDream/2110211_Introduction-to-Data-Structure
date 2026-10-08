@@ -1,0 +1,146 @@
+#ifndef _STUDENT_H_INCLUDE_
+#define _STUDENT_H_INCLUDE_
+
+#include "stack.h"
+
+// ============================================================
+// โจทย์: เพิ่มความสามารถ undo() และ redo() ให้กับ CP::stack<T>
+// นอกเหนือจาก push(value) และ pop() แบบปกติ
+//
+// แนวคิด (approach):
+// เราใช้ auxiliary stack สองตัวที่มีอยู่แล้วเป็น member ของ
+// CP::stack<T> (ถูกเพิ่มไว้ในฝั่งของ grader):
+//   std::stack<std::pair<int,T>> aux_stack_1  -> "undo log"
+//   std::stack<std::pair<int,T>> aux_stack_2  -> "redo log"
+//
+// ทุกครั้งที่มีการเรียก push() หรือ pop() จริง เราจะบันทึกข้อมูล
+// การกระทำนั้นลงใน aux_stack_1 (undo log) หนึ่งรายการ และล้าง
+// aux_stack_2 (redo log) ทิ้ง เพราะเมื่อมีการกระทำใหม่เกิดขึ้น
+// action ที่เคย undo ไว้ก่อนหน้านี้จะไม่สามารถ redo ได้อีกต่อไป
+//
+// แต่ละรายการใน log เก็บเป็น pair<int,T> โดย
+//   first  = 0  -> action นี้คือ push และ second คือค่าที่ถูก
+//                  push เข้าไป
+//   first  = 1  -> action นี้คือ pop และ second คือค่าที่ถูกลบ
+//                  ออกไป (เก็บไว้เพื่อคืนค่ากลับตอน undo)
+//
+// undo():
+//   ดู action ล่าสุดที่บันทึกไว้ใน aux_stack_1
+//     - ถ้าเป็น push การ undo คือลบค่าล่าสุดออกอีกครั้ง (mSize--)
+//     - ถ้าเป็น pop การ undo คือใส่ค่าที่เคยถูกลบกลับเข้าไปใหม่
+//       (mSize++ แล้วเขียนค่าเดิมกลับที่ mData[mSize-1])
+//   จากนั้นย้าย entry เดียวกันนี้ไปไว้ใน aux_stack_2 (redo log)
+//   เพื่อให้ redo() รู้ว่าต้องทำอะไรซ้ำ
+//
+// redo():
+//   ดู entry ล่าสุดที่ undo() เพิ่งย้ายไปไว้ใน aux_stack_2
+//     - ถ้า action เดิมคือ push การ redo คือ push ค่าเดิมซ้ำอีกครั้ง
+//     - ถ้า action เดิมคือ pop การ redo คือ pop ซ้ำอีกครั้ง
+//   จากนั้นย้าย entry นี้กลับไปไว้ใน aux_stack_1 เพื่อให้สามารถ
+//   undo ซ้ำได้อีกในอนาคตถ้าต้องการ
+//
+// เหตุผลที่วิธีนี้ถูกต้องตามที่โจทย์ต้องการ:
+//   - undo() เมื่อไม่มีอะไรให้ undo (aux_stack_1 ว่าง) จะไม่ทำอะไร
+//   - redo() จะทำงานได้ก็ต่อเมื่อเพิ่งมีการ undo() มาก่อนหน้าเท่านั้น
+//     เพราะถ้ามี push/pop คั่นกลาง aux_stack_2 จะถูกล้างทิ้งไปแล้ว
+//     ทำให้ redo() หลังจากนั้นไม่ทำอะไรตามที่โจทย์กำหนด
+//   - การเรียก undo()/redo() สลับกันไปมาหลายรอบจะได้ state เดิม
+//     เป๊ะทุกครั้ง เพราะแต่ละ entry เก็บค่าที่จำเป็นสำหรับย้อนกลับ
+//     หรือทำซ้ำ action นั้นไว้ครบถ้วนอยู่แล้ว ไม่ต้องคำนวณใหม่
+//   - ตามที่โจทย์กำหนด เราไม่จำเป็นต้องย้าย address ของ mData
+//     กลับไปที่เดิมหลังจากมีการ expand เกิดขึ้น เราแค่เปลี่ยนค่า
+//     mSize และเขียนข้อมูลลงใน buffer เดิมเท่านั้น ซึ่ง buffer
+//     เดิมจะมีขนาดใหญ่พอเสมอ เพราะ ensureCapacity() มีแต่จะขยาย
+//     ขนาดให้ใหญ่ขึ้นเท่านั้น ไม่เคยเล็กลง
+// ============================================================
+
+template<typename T>
+void CP::stack<T>::push(const T &value) {
+  // ทำการ push ข้อมูลจริง: ขยาย buffer ถ้าจำเป็น แล้ววางค่าใหม่
+  // ไว้ที่ตำแหน่งบนสุด จากนั้นเพิ่ม mSize ขึ้นหนึ่ง
+  ensureCapacity(mSize + 1);
+  mData[mSize] = value;
+  mSize++;
+
+  // บันทึก action นี้ไว้เพื่อให้สามารถ undo ได้ในภายหลัง
+  // marker 0 หมายถึง "action นี้คือ push ค่า value"
+  aux_stack_1.push(std::make_pair(0, value));
+
+  // เมื่อมี action ใหม่เกิดขึ้น action ที่เคย undo ไว้ก่อนหน้า
+  // จะใช้ redo ต่อไม่ได้อีกแล้ว จึงต้องล้าง redo log ทิ้ง
+  aux_stack_2 = std::stack<std::pair<int, T> >();
+  return;
+}
+
+template <typename T>
+void CP::stack<T>::pop() {
+  //Do not modify this line
+  if (size() == 0) throw std::out_of_range("index of out range") ;
+  // จำค่าที่กำลังจะถูกลบออกไว้ก่อน เพื่อให้ undo() สามารถคืนค่า
+  // กลับมาได้ในภายหลัง
+  T removedValue = mData[mSize - 1];
+  mSize--;
+
+  // บันทึก action นี้ไว้เพื่อให้สามารถ undo ได้ในภายหลัง
+  // marker 1 หมายถึง "action นี้คือ pop ที่ลบค่า removedValue ออกไป"
+  aux_stack_1.push(std::make_pair(1, removedValue));
+
+  // ล้าง redo log ทิ้ง ด้วยเหตุผลเดียวกันกับใน push()
+  aux_stack_2 = std::stack<std::pair<int, T> >();
+  return;
+}
+
+template <typename T>
+void CP::stack<T>::undo() {
+  // ยังไม่มี action ใดถูกทำเลย (หรือถูก undo ไปหมดแล้ว)
+  // จึงไม่มีอะไรให้ undo
+  if (aux_stack_1.empty()) return;
+
+  std::pair<int, T> lastAction = aux_stack_1.top();
+  aux_stack_1.pop();
+
+  if (lastAction.first == 0) {
+    // action ล่าสุดคือ push -> undo โดยลบข้อมูลออกอีกครั้ง
+    // ไม่จำเป็นต้องแก้ไข mData เลย
+    mSize--;
+  } else {
+    // action ล่าสุดคือ pop -> undo โดยคืนค่าที่ถูกลบกลับเข้าไป
+    // buffer ยังมีขนาดใหญ่พอแน่นอน เพราะก่อนหน้านี้เราแค่ลด mSize
+    // ลง ไม่เคยลด mCap
+    ensureCapacity(mSize + 1);
+    mData[mSize] = lastAction.second;
+    mSize++;
+  }
+
+  // จำ action ที่เพิ่ง undo ไปไว้ เพื่อให้ redo() สามารถทำซ้ำได้
+  aux_stack_2.push(lastAction);
+  return;
+};
+
+template <typename T>
+void CP::stack<T>::redo() {
+  // ไม่มีการ undo เกิดขึ้นมาก่อน (หรือถูก redo ไปหมดแล้ว)
+  // จึงไม่มีอะไรให้ redo
+  if (aux_stack_2.empty()) return;
+
+  std::pair<int, T> undoneAction = aux_stack_2.top();
+  aux_stack_2.pop();
+
+  if (undoneAction.first == 0) {
+    // action ที่เพิ่ง undo ไปเดิมทีคือ push -> redo โดย push
+    // ค่าเดิมซ้ำอีกครั้ง
+    ensureCapacity(mSize + 1);
+    mData[mSize] = undoneAction.second;
+    mSize++;
+  } else {
+    // action ที่เพิ่ง undo ไปเดิมทีคือ pop -> redo โดย pop ซ้ำอีกครั้ง
+    mSize--;
+  }
+
+  // นำ action นี้กลับไปไว้ใน undo log อีกครั้ง เผื่อต้องการ undo
+  // ซ้ำในอนาคต
+  aux_stack_1.push(undoneAction);
+  return;
+}
+
+#endif

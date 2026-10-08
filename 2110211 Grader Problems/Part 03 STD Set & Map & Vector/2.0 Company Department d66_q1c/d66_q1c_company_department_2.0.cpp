@@ -11,8 +11,8 @@ int main() {
     int count_employee , count_event ; 
     cin >> count_employee >> count_event ; 
 
-    map<string , set<string> > company_info ; // not that set can erase value directly 
-    map<string , string> employee_info ; // for finding value in map
+    map<string , set<string> > company_info ; // not that set can erase value directly {dept , name}
+    map<string , string> employee_info ; // for finding value in map {name , dept}
 
     for (int i = 0 ; i < count_employee ; i++) { 
         string employee_name , dept_name ; 
