@@ -125,6 +125,7 @@ int main() {
     std::cout << "reuse size=" << reuse.size()
               << " top=" << reuse.top() << '\n';
 }
+
 /* Expected Result
 k=0 size=0 top->bottom:
 k=1 size=1 top->bottom: 5

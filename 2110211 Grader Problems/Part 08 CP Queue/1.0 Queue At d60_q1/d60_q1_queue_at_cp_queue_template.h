@@ -16,7 +16,6 @@ class queue
     size_t mSize;
     size_t mFront;
 
-
     void expand(size_t capacity) {
       T *arr = new T[capacity]();
       for (size_t i = 0;i < mSize;i++) {
@@ -26,7 +25,6 @@ class queue
       mData = arr;
       mCap = capacity;
       mFront = 0;
-      
     }
 
     void ensureCapacity(size_t capacity) {
@@ -41,15 +39,24 @@ class queue
     //-------------- constructor ----------
 
     // copy constructor
-    queue(const queue<T>& a) : mData( new T[a.mCap]() ), mCap( a.mCap ),
-      mSize( a.mSize ), mFront( a.mFront ) {
+    queue(const queue<T>& a) {
+      this->mData = new T[a.mCap]();
+      this->mCap = a.mCap;
+      this->mSize = a.mSize;
       for (size_t i = 0; i < a.mCap;i++) {
         mData[i] = a.mData[i];
       }
+      this->mFront = a.mFront;
     }
 
     // default constructor
-    queue() : mData(new T[1]()), mCap(1), mSize(0), mFront(0) { }
+    queue() {
+      int cap = 1;
+      mData = new T[cap]();
+      mCap = cap;
+      mSize = 0;
+      mFront = 0;
+    }
 
     // copy assignment operator
     queue<T>& operator=(queue<T> other) {
@@ -57,7 +64,6 @@ class queue
       swap(mSize,other.mSize);
       swap(mCap,other.mCap);
       swap(mData,other.mData);
-      swap(mFront,other.mFront);
       return *this;
     }
 
@@ -98,6 +104,20 @@ class queue
     }
 
 
+    //for quiz
+    void print() {
+      CP::queue<T> x(*this);
+      std::cout << "Queue size = " << x.size() << " Data = ";
+      while (x.empty() == false) {
+        T a;
+        a = x.front();
+        x.pop();
+        std::cout << a << " ";
+      }
+      std::cout << std::endl;
+    }
+
+    T operator[](int idx);
 };
 
 }

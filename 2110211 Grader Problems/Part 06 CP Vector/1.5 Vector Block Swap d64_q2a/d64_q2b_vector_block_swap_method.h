@@ -2,7 +2,7 @@
 #define __STUDENT_H_
 
 template <typename T>
-bool CP::vector<T>::block_swap(iterator a, iterator b, size_t m) {
+bool CP::0or<T>::block_swap(iterator a, iterator b, size_t m) {
   //write your code here
 
   // just return true/false if interval are able to do block swap 

@@ -1,7 +1,7 @@
 /*
 10. (10 คะแนน) Popcorn on the Cloud!!! หลังจากที่ร้าน Popcorn ขายดีมาก เราจึงพัฒนาให้ร้าน Popcorn ของเราดียิ่งขึ้นโดยการ
 เพิ่มรสชาติของ Popcorn และให้ลูกค้าสามารถสั่งแบบด่วนได้โดยการเพิ่มเงินค่าความ “ด่วน” ในโจทย์ข้อนี้ เราจะขาย popcorn
-เป็นถุง โดยเราจะท า popcorn เสร็จทีละถุงและลูกค้าจะสั่งทีละ 1 ถุงเสมอ จงเขียนคลาส PopcornDispatcher ซึ่งช่วยในการขาย
+เป็นถุง โดยเราจะทำ popcorn เสร็จทีละถุงและลูกค้าจะสั่งทีละ 1 ถุงเสมอ จงเขียนคลาส PopcornDispatcher ซึ่งช่วยในการขาย
 Popcorn โดยคลาสนี้จะต้องมีฟังก์ชันดังต่อไปนี้
 
 • void order(string flavor, string id, int priority) ซึ่งจะถูกเรียกเมื่อมีลูกค้า (ที่ระบุด้วยรหัสลูกค้า id) สั่ง popcorn รส
@@ -34,8 +34,18 @@ member เป็นประเภทที่ประกอบด้วยข�
 #include <algorithm>
 using namespace std ; 
 
+
+
+
+
+
+
+
 class PopcornDispatcher { 
     protected :
+    
+
+        
          
         
 
