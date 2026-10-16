@@ -1,0 +1,18 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     'output/m2f_test'
+relocations:
+  - { offset: 0x24C3, size: 0x8, addend: 0x0, symName: __ZStL8__ioinit, symObjAddr: 0x19FA0, symBinAddr: 0x100010A40, symSize: 0x0 }
+  - { offset: 0x286E, size: 0x8, addend: 0x0, symName: __GLOBAL__sub_I_d63_q3a_queue_m2f.cpp, symObjAddr: 0x7FB8, symBinAddr: 0x100006C00, symSize: 0x24 }
+  - { offset: 0x2885, size: 0x8, addend: 0x0, symName: __Z41__static_initialization_and_destruction_0v, symObjAddr: 0x7F7C, symBinAddr: 0x100006BC4, symSize: 0x3C }
+  - { offset: 0x28A0, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE6expandEm, symObjAddr: 0x2368, symBinAddr: 0x10000649C, symSize: 0x6E0 }
+  - { offset: 0x2907, size: 0x8, addend: 0x0, symName: __ZNK2CP5queueIiE4sizeEv, symObjAddr: 0x22C8, symBinAddr: 0x1000063FC, symSize: 0xA0 }
+  - { offset: 0x292F, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE14ensureCapacityEm, symObjAddr: 0x216C, symBinAddr: 0x1000062A0, symSize: 0x15C }
+  - { offset: 0x2987, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE13move_to_frontEm, symObjAddr: 0x179C, symBinAddr: 0x1000058D0, symSize: 0x9D0 }
+  - { offset: 0x29EE, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE5printEv, symObjAddr: 0x10A8, symBinAddr: 0x1000051DC, symSize: 0x6F4 }
+  - { offset: 0x2A37, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE3popEv, symObjAddr: 0xD6C, symBinAddr: 0x100004EA0, symSize: 0x33C }
+  - { offset: 0x2A5F, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiE4pushERKi, symObjAddr: 0x86C, symBinAddr: 0x1000049A0, symSize: 0x500 }
+  - { offset: 0x2AAE, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiED1Ev, symObjAddr: 0x7B0, symBinAddr: 0x1000048E4, symSize: 0xBC }
+  - { offset: 0x2AF8, size: 0x8, addend: 0x0, symName: __ZN2CP5queueIiEC1Ev, symObjAddr: 0x48C, symBinAddr: 0x1000045C0, symSize: 0x324 }
+  - { offset: 0x2B48, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x0, symBinAddr: 0x100004134, symSize: 0x48C }
+...

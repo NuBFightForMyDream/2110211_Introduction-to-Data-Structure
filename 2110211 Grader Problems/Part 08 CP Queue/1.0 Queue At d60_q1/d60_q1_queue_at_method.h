@@ -7,12 +7,24 @@ T CP::queue<T>::operator[](int idx) {
   //
   // you need to return something
 
-  // formula : add mSize for 1 loop . -1 then +1 for original index
-  if (idx >= 0)
+  /*
+    const T& front() const {
+      if (size() == 0) throw std::out_of_range("index of out range") ;
+      return mData[mFront];
+    }
+    const T& back() const {
+      if (size() == 0) throw std::out_of_range("index of out range") ;
+      return mData[(mFront + mSize - 1) % mCap];
+    }
+  */
 
-  // this case works only for 
-  return mData[ ((idx + mFront) - 1 + mSize) % mSize + 1 ] ; // from front of queue with sequence idx
-  
+  // logic similar as front and back 
+  if (idx >= 0) { // get front 
+      return mData[ (mFront + idx) % mCap ] ; // mod with capacity
+  }
+  else { 
+      return mData[ (mFront + idx + mSize) % mCap ] ; // mod with capacity but need to add with mSize first for positive value
+  }
 }
 
 #endif
